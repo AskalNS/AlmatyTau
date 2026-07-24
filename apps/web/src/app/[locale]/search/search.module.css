@@ -1,0 +1,63 @@
+.title {
+  font-size: 44px;
+  margin-bottom: 28px;
+}
+@media (max-width: 768px) {
+  .title {
+    font-size: 30px;
+  }
+}
+.form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+  max-width: 680px;
+}
+.form input {
+  flex: 1;
+  font: inherit;
+  font-size: 17px;
+  padding: 12px 18px;
+  border: 1px solid var(--s-300);
+  border-radius: var(--r-btn);
+  font-family: var(--font-text);
+}
+.form input:focus {
+  outline: 2px solid var(--green-600);
+  border-color: var(--green-600);
+}
+.count {
+  color: var(--s-500);
+  font-size: 15px;
+  margin-bottom: 20px;
+}
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 820px;
+}
+.result {
+  border-bottom: 1px solid var(--s-200);
+  padding-bottom: 20px;
+}
+.result h2 {
+  font-size: 20px;
+  margin: 10px 0 6px;
+}
+.result p {
+  margin: 0;
+  color: var(--s-600);
+  font-size: 15px;
+}
+.result p :global(mark) {
+  background: #fbf3e3;
+  color: var(--gold-700);
+  padding: 0 2px;
+}
+.date {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--s-500);
+}

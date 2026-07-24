@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ATM — UI-макеты (этап 2)</title>
+<style>
+/* ============================================================
+   ДИЗАЙН-ТОКЕНЫ  (соответствуют ui/01-DESIGN-SYSTEM.md)
+   ============================================================ */
+:root{
+  --green-50:#EEF5F2; --green-100:#D6E7E0; --green-300:#7DB0A0;
+  --green-600:#1B5648; --green-700:#14483C; --green-900:#08211C;
+  --gold-500:#C8912F; --gold-700:#8A6220;
+  --sky-500:#2B87B8;  --sky-700:#1F6A94;
+  --s-0:#FFFFFF; --s-50:#F7F8F8; --s-100:#EFF1F1; --s-200:#E1E4E4;
+  --s-300:#C7CCCB; --s-400:#9AA2A1; --s-500:#6E7876; --s-600:#4E5654;
+  --s-700:#363C3B; --s-800:#232827; --s-900:#141817;
+  --r-card:8px; --r-btn:6px;
+  --sh-1:0 1px 2px rgba(20,24,23,.06);
+  --sh-2:0 8px 24px rgba(20,24,23,.10);
+  --disp:"Manrope","Segoe UI",system-ui,sans-serif;
+  --text:"Inter","Segoe UI",system-ui,sans-serif;
+  --wrap:1280px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:var(--text);font-size:17px;line-height:1.7;color:var(--s-900);background:var(--s-100);display:flex}
+h1,h2,h3,h4{font-family:var(--disp);font-weight:700;margin:0;line-height:1.15;letter-spacing:-.015em}
+a{color:var(--green-600)}
+img{max-width:100%}
+:focus-visible{outline:2px solid var(--green-600);outline-offset:2px}
+
+/* ---------- оболочка прототипа ---------- */
+aside{width:238px;flex:none;background:var(--s-900);color:#c9cdcc;height:100vh;position:sticky;top:0;overflow-y:auto;padding:18px 0;font-size:13px}
+aside h1{font-size:13px;color:#fff;margin:0 16px 3px;font-family:var(--text);font-weight:600}
+aside .sb{font-size:11px;color:#7c8482;margin:0 16px 16px;line-height:1.45}
+aside .grp{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:#6b7371;margin:16px 16px 5px}
+aside a{display:block;padding:7px 16px;color:#c9cdcc;text-decoration:none;border-left:3px solid transparent;cursor:pointer}
+aside a:hover{background:#1e2322}
+aside a.on{background:#1e2322;border-left-color:var(--gold-500);color:#fff}
+main{flex:1;min-width:0}
+.tb{background:#fff;border-bottom:1px solid var(--s-200);padding:9px 20px;display:flex;gap:12px;align-items:center;position:sticky;top:0;z-index:50;font-size:13px}
+.tb b{font-family:var(--text)}
+.tb .sp{flex:1}
+.tb button{font:inherit;font-size:12px;padding:5px 12px;border:1px solid var(--s-200);background:#fff;border-radius:6px;cursor:pointer;color:var(--s-700)}
+.tb button.on{background:var(--s-900);color:#fff;border-color:var(--s-900)}
+.view{padding:22px;overflow-x:hidden}
+.dev{background:#fff;margin:0 auto;max-width:var(--wrap);box-shadow:var(--sh-2);transition:max-width .2s}
+body.mob .dev{max-width:390px}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 48px}
+body.mob .wrap{padding:0 20px}
+
+/* ============================================================
+   КОМПОНЕНТЫ САЙТА
+   ============================================================ */
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--text);font-size:15px;font-weight:600;
+  padding:12px 24px;border-radius:var(--r-btn);text-decoration:none;border:1.5px solid transparent;cursor:pointer;transition:.15s}
+.btn-p{background:var(--green-600);color:#fff}
+.btn-p:hover{background:var(--green-700)}
+.btn-s{background:#fff;color:var(--green-700);border-color:var(--s-300)}
+.btn-s:hover{border-color:var(--green-600)}
+.btn-g{background:transparent;color:#fff;border-color:rgba(255,255,255,.55)}
+.btn-g:hover{background:rgba(255,255,255,.12)}
+.btn-sm{padding:8px 16px;font-size:14px}
+
+.tag{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.02em;
+  padding:4px 12px;border-radius:999px;background:var(--green-50);color:var(--green-700)}
+.tag-g{background:#FBF3E3;color:var(--gold-700)}
+
+.eyebrow{font-size:13px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--gold-700);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.eyebrow::before{content:"";width:26px;height:2px;background:var(--gold-500)}
+
+/* --- шапка --- */
+.hdr{background:#fff;border-bottom:1px solid var(--s-200);position:relative;z-index:20}
+.hdr .top{border-bottom:1px solid var(--s-100);font-size:13px;color:var(--s-500)}
+.hdr .top .wrap{display:flex;align-items:center;gap:18px;height:38px}
+.hdr .top .sp{flex:1}
+.lang{display:flex;gap:2px}
+.lang span{padding:2px 8px;border-radius:4px;cursor:pointer;font-weight:500}
+.lang span.on{background:var(--green-600);color:#fff}
+.a11y-btn{display:flex;align-items:center;gap:6px;color:var(--s-600);text-decoration:none}
+.hdr .main .wrap{display:flex;align-items:center;gap:36px;height:76px}
+.logo{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--s-900);flex:none}
+.logo .mk{width:36px;height:36px;flex:none}
+.logo .nm{font-family:var(--disp);font-weight:800;font-size:15px;line-height:1.15;letter-spacing:-.02em}
+.logo .nm small{display:block;font-family:var(--text);font-weight:500;font-size:10.5px;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--s-500)}
+.nav{display:flex;gap:28px;font-size:15px;font-weight:500}
+.nav a{color:var(--s-700);text-decoration:none;padding:26px 0;position:relative;white-space:nowrap}
+.nav a.on{color:var(--green-700);font-weight:600}
+.nav a.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;background:var(--gold-500)}
+.nav a.dd::after{content:" ▾";font-size:10px;color:var(--s-400)}
+.hdr .main .sp{flex:1}
+.burger{display:none;font-size:22px;color:var(--s-700)}
+body.mob .nav{display:none}
+body.mob .burger{display:block;margin-left:auto}
+body.mob .hdr .main .wrap{height:62px}
+
+/* --- горы (CSS-иллюстрация вместо фото) --- */
+.mtn{position:absolute;inset:0;overflow:hidden;background:linear-gradient(180deg,#1a4f6b 0%,#2e7ea3 38%,#7db8cf 66%,#cfe4e6 100%)}
+.mtn i{position:absolute;bottom:0;left:0;right:0;display:block}
+.m1{height:62%;background:#3f6f7a;clip-path:polygon(0 62%,13% 28%,24% 47%,38% 12%,52% 40%,66% 20%,80% 44%,92% 26%,100% 50%,100% 100%,0 100%)}
+.m2{height:50%;background:#2b5560;clip-path:polygon(0 70%,10% 42%,22% 60%,34% 30%,47% 55%,60% 34%,74% 58%,88% 38%,100% 62%,100% 100%,0 100%)}
+.m3{height:36%;background:#173b42;clip-path:polygon(0 78%,14% 52%,28% 70%,42% 44%,56% 66%,70% 48%,84% 68%,100% 54%,100% 100%,0 100%)}
+.snow{position:absolute;bottom:0;left:0;right:0;height:62%;
+  background:linear-gradient(180deg,rgba(255,255,255,.85) 0 4%,transparent 14%);
+  clip-path:polygon(0 62%,13% 28%,24% 47%,38% 12%,52% 40%,66% 20%,80% 44%,92% 26%,100% 50%,100% 100%,0 100%)}
+.cable{position:absolute;top:22%;left:0;right:0;height:1px;background:rgba(255,255,255,.4);transform:rotate(-4deg)}
+.cable::after{content:"";position:absolute;left:38%;top:-5px;width:16px;height:10px;background:rgba(255,255,255,.6);border-radius:2px}
+.veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,33,28,.62) 0%,rgba(8,33,28,.22) 42%,rgba(8,33,28,.78) 100%)}
+
+/* --- герой --- */
+.hero{position:relative;min-height:600px;display:flex;align-items:flex-end;color:#fff;overflow:hidden}
+body.mob .hero{min-height:440px}
+.hero .wrap{position:relative;z-index:2;padding-top:90px;padding-bottom:60px}
+.hero h1{font-size:60px;font-weight:800;max-width:15ch;text-shadow:0 2px 20px rgba(0,0,0,.3)}
+body.mob .hero h1{font-size:34px}
+.hero p{font-size:20px;max-width:52ch;color:rgba(255,255,255,.9);margin:20px 0 32px}
+body.mob .hero p{font-size:17px}
+.hero .eyebrow{color:#F0D08A}
+.hero .eyebrow::before{background:var(--gold-500)}
+.play{position:absolute;right:48px;bottom:60px;z-index:2;display:flex;align-items:center;gap:11px;
+  color:#fff;font-size:13px;background:rgba(255,255,255,.13);backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:9px 18px 9px 10px}
+.play b{width:26px;height:26px;border-radius:50%;background:#fff;color:var(--green-700);
+  display:grid;place-items:center;font-size:10px}
+body.mob .play{display:none}
+
+/* --- секции --- */
+.sec{padding:96px 0}
+body.mob .sec{padding:56px 0}
+.sec.alt{background:var(--s-50)}
+.sec h2{font-size:32px;margin-bottom:16px}
+body.mob .sec h2{font-size:24px}
+.lead{font-size:20px;color:var(--s-600);max-width:62ch}
+body.mob .lead{font-size:17px}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:40px}
+body.mob .head{flex-direction:column;align-items:flex-start;gap:14px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+body.mob .grid2,body.mob .grid3,body.mob .grid4{grid-template-columns:1fr;gap:24px}
+
+/* --- показатели --- */
+.stat{border-top:3px solid var(--gold-500);padding-top:20px}
+.stat b{display:block;font-family:var(--disp);font-size:46px;font-weight:800;
+  line-height:1;letter-spacing:-.03em;color:var(--green-700);font-variant-numeric:tabular-nums}
+body.mob .stat b{font-size:36px}
+.stat span{display:block;font-size:15px;color:var(--s-600);margin-top:10px}
+
+/* --- карточка новости --- */
+.card{background:#fff;border:1px solid var(--s-200);border-radius:var(--r-card);
+  overflow:hidden;display:flex;flex-direction:column;transition:.18s}
+.card:hover{box-shadow:var(--sh-2);transform:translateY(-3px)}
+.card .im{aspect-ratio:16/9;position:relative;overflow:hidden;background:var(--green-100)}
+.card .bd{padding:22px;flex:1;display:flex;flex-direction:column;gap:10px}
+.card .dt{font-size:13px;color:var(--s-500);font-variant-numeric:tabular-nums}
+.card h3{font-size:19px;line-height:1.35}
+.card h3 a{color:inherit;text-decoration:none}
+.card p{margin:0;font-size:15px;color:var(--s-600);line-height:1.6}
+
+/* --- строка документа --- */
+.doc{display:flex;align-items:center;gap:18px;padding:18px 20px;background:#fff;
+  border:1px solid var(--s-200);border-radius:var(--r-card);margin-bottom:10px;transition:.15s}
+.doc:hover{border-color:var(--green-300)}
+.doc .ico{width:42px;height:52px;flex:none;border-radius:4px;background:var(--green-50);
+  border:1px solid var(--green-100);display:grid;place-items:center;
+  font-size:10px;font-weight:700;color:var(--green-700);letter-spacing:.03em}
+.doc .in{flex:1;min-width:0}
+.doc .in b{display:block;font-weight:600;font-size:16px;margin-bottom:3px}
+.doc .in span{font-size:13px;color:var(--s-500)}
+body.mob .doc{flex-wrap:wrap}
+
+/* --- формы --- */
+.fld{margin-bottom:16px}
+.fld label{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
+.fld input,.fld textarea{width:100%;font:inherit;font-size:16px;padding:11px 14px;
+  border:1px solid var(--s-300);border-radius:var(--r-btn);background:#fff;font-family:var(--text)}
+.fld textarea{min-height:110px;resize:vertical}
+.fld input:focus,.fld textarea:focus{outline:2px solid var(--green-600);outline-offset:0;border-color:var(--green-600)}
+
+/* --- подвал --- */
+.ftr{background:var(--green-900);color:#a9bdb6;font-size:15px;padding:64px 0 0}
+.ftr h4{color:#fff;font-family:var(--text);font-size:14px;font-weight:600;
+  letter-spacing:.05em;text-transform:uppercase;margin-bottom:16px}
+.ftr a{color:#a9bdb6;text-decoration:none;display:block;padding:5px 0}
+.ftr a:hover{color:#fff}
+.ftr .btm{border-top:1px solid rgba(255,255,255,.12);margin-top:52px;padding:22px 0;
+  font-size:13px;color:#7d938c;display:flex;gap:20px;flex-wrap:wrap}
+.ftr .btm .sp{flex:1}
+
+/* --- стайлгайд --- */
+.sg{padding:44px 48px;max-width:1180px;margin:0 auto;background:#fff}
+.sg section{margin-bottom:56px}
+.sg h2{font-size:24px;margin-bottom:6px}
+.sg .cap{color:var(--s-500);font-size:15px;margin-bottom:24px}
+.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:14px}
+.sw div{border-radius:var(--r-card);overflow:hidden;border:1px solid var(--s-200)}
+.sw div i{display:block;height:72px}
+.sw div p{margin:0;padding:9px 11px;font-size:12px;line-height:1.5}
+.sw div p b{display:block;font-family:ui-monospace,monospace;font-size:11px;color:var(--s-500);font-weight:400}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--s-200)}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--s-500);font-weight:600}
+.ok{color:#1f6b4a;font-weight:600}
+.no{color:#a8322a;font-weight:600}
+.warn{background:#FDF8EC;border-left:3px solid var(--gold-500);padding:14px 18px;
+  font-size:14px;line-height:1.6;border-radius:0 var(--r-card) var(--r-card) 0;margin:18px 0}
+
+/* --- режим для слабовидящих --- */
+.a11y{background:#000;color:#FFE600;font-size:22px;line-height:1.85}
+.a11y .bar2{border-bottom:3px solid #FFE600;padding:18px 32px;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.a11y .bar2 span{border:2px solid #FFE600;padding:6px 14px}
+.a11y .ct{padding:32px;max-width:900px}
+.a11y h1{font-size:40px;margin-bottom:20px;color:#FFE600}
+.a11y .alt{border:3px dashed #FFE600;padding:18px;margin:22px 0}
+</style>
+</head>
+<body>
+
+<aside>
+  <h1>UI-макеты</h1>
+  <div class="sb">ТОО «Almaty Tau Management»<br>Этап 2 приёмки · п. XIV ТЗ</div>
+  <div id="menu"></div>
+</aside>
+
+<main>
+  <div class="tb">
+    <b id="t">—</b><span class="sp"></span>
+    <button id="bD" class="on">Desktop</button>
+    <button id="bM">Mobile</button>
+  </div>
+  <div class="view"><div class="dev" id="dev"></div></div>
+</main>
+
+<script>
+/* =============== общие фрагменты =============== */
+const MARK = `<svg class="mk" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+  <path d="M2 32 L13 12 L20 24 L27 8 L38 32 Z" fill="#14483C"/>
+  <path d="M27 8 L31.4 16 L22.6 16 Z" fill="#fff"/>
+  <path d="M13 12 L16.2 17.7 L9.8 17.7 Z" fill="#fff"/>
+  <circle cx="20" cy="35.5" r="2.2" fill="#C8912F"/>
+</svg>`;
+
+const NAV=[['Главная','home'],['Almaty Tau Management','',1],['Проект АГК',''],
+           ['Корпоративная информация','',1],['Медиацентр','news',1],['Контакты','contacts']];
+
+function hdr(cur){return `<header class="hdr">
+  <div class="top"><div class="wrap">
+    <span>г. Алматы, ул. Байзакова 303</span><span class="sp"></span>
+    <a class="a11y-btn" href="#">◐ Версия для слабовидящих</a>
+    <span>⌕ Поиск</span>
+    <div class="lang"><span>ҚАЗ</span><span class="on">РУС</span><span>ENG</span></div>
+  </div></div>
+  <div class="main"><div class="wrap">
+    <a class="logo" href="#">${MARK}<span class="nm">ALMATY TAU<br>MANAGEMENT<small>Алматинский горный кластер</small></span></a>
+    <nav class="nav">${NAV.map(([n,k,d])=>`<a href="#" class="${k===cur?'on':''}${d?' dd':''}">${n}</a>`).join('')}</nav>
+    <span class="burger">☰</span>
+  </div></div>
+</header>`}
+
+function ftr(){return `<footer class="ftr"><div class="wrap">
+  <div class="grid4">
+    <div>
+      <a class="logo" href="#" style="color:#fff;margin-bottom:18px">${MARK}
+        <span class="nm" style="color:#fff">ALMATY TAU<br>MANAGEMENT<small style="color:#7d938c">Оператор проекта АГК</small></span></a>
+      <p style="font-size:14px;line-height:1.7;margin:0">Официальный сайт оператора проекта «Алматинский горный кластер».</p>
+    </div>
+    <div><h4>Компания</h4><a href="#">О компании</a><a href="#">Правление</a>
+      <a href="#">Наблюдательный совет</a><a href="#">Организационная структура</a></div>
+    <div><h4>Информация</h4><a href="#">Проект АГК</a><a href="#">Внутренние документы</a>
+      <a href="#">Государственные закупки</a><a href="#">Вакансии</a></div>
+    <div><h4>Контакты</h4>
+      <p style="margin:0 0 10px;font-size:14px;line-height:1.7">г. Алматы,<br>ул. Байзакова 303, 2 этаж</p>
+      <a href="#">+7 (727) 000-00-00</a><a href="#">info@atm.kz</a>
+      <p style="font-size:13px;color:#7d938c;margin:10px 0 0">Пн–Пт, 09:00–18:00</p></div>
+  </div>
+  <div class="btm"><span>© 2026 ТОО «Almaty Tau Management»</span><span class="sp"></span>
+    <a href="#" style="display:inline">Политика конфиденциальности</a>
+    <a href="#" style="display:inline">Карта сайта</a></div>
+</div></footer>`}
+
+function mtn(cable){return `<div class="mtn">
+  <i class="m1"></i><i class="snow"></i><i class="m2"></i><i class="m3"></i>
+  ${cable?'<div class="cable"></div>':''}</div><div class="veil"></div>`}
+
+/* =============== экраны =============== */
+const S={};
+
+S.style={t:'Дизайн-система',grp:'Основа',html:()=>`<div class="sg">
+  <section>
+    <div class="eyebrow">Этап 2 · UI</div>
+    <h2 style="font-size:34px">Дизайн-система</h2>
+    <p class="cap" style="font-size:18px;max-width:70ch">Брендбук Заказчиком не предоставлен.
+      Палитра выведена из ландшафта Заилийского Алатау: тянь-шаньская ель, камень, снег,
+      рассветное золото на вершинах. Каждый цвет проверен на контраст по WCAG 2.1.</p>
+  </section>
+
+  <section>
+    <h2>Цвет</h2><p class="cap">Основная — Tau Green. Акцент — Sun Gold. Дополнительный — Sky.</p>
+    <div class="sw">
+      ${[['#EEF5F2','green-50','Фон секций'],['#D6E7E0','green-100','Границы'],
+         ['#7DB0A0','green-300','Декор'],['#1B5648','green-600','Основной'],
+         ['#14483C','green-700','Ховер, шапка'],['#08211C','green-900','Подвал'],
+         ['#C8912F','gold-500','Только декор'],['#8A6220','gold-700','Акцентный текст'],
+         ['#2B87B8','sky-500','Инфографика'],['#1F6A94','sky-700','Внешние ссылки'],
+         ['#141817','stone-900','Основной текст'],['#6E7876','stone-500','Вторичный текст']]
+        .map(([c,n,u])=>`<div><i style="background:${c}"></i><p><b>${n}</b>${u}<br><b>${c}</b></p></div>`).join('')}
+    </div>
+    <div class="warn"><b>Жёсткое правило.</b> <code>gold-500</code> никогда не используется как цвет
+      текста на светлом фоне — контраст 2.8:1 не проходит WCAG. Только заливка, подчёркивание, иконка.
+      Для текста акцентом существует <code>gold-700</code> (5.5:1). Это самая частая ошибка
+      в подобных палитрах, и она сразу валит аудит доступности по п. VI ТЗ.</div>
+  </section>
+
+  <section>
+    <h2>Контраст</h2><p class="cap">Вычислено по формуле WCAG 2.1. Норма: 4.5:1 для текста, 3:1 для крупного.</p>
+    <table><thead><tr><th>Пара</th><th>Коэффициент</th><th>Вердикт</th></tr></thead><tbody>
+      ${[['#141817 на белом — основной текст','17.9 : 1','AAA',1],
+         ['#1B5648 на белом — ссылки и кнопки','8.5 : 1','AAA',1],
+         ['Белый на #1B5648 — текст на кнопке','8.5 : 1','AAA',1],
+         ['#1F6A94 на белом — внешние ссылки','5.9 : 1','AA',1],
+         ['#8A6220 на белом — акцентный текст','5.5 : 1','AA',1],
+         ['#141817 на #C8912F — тёмный по золоту','6.7 : 1','AA',1],
+         ['#C8912F на белом','2.8 : 1','не для текста',0]]
+        .map(([a,b,c,ok])=>`<tr><td>${a}</td><td style="font-variant-numeric:tabular-nums">${b}</td>
+          <td class="${ok?'ok':'no'}">${ok?'✓ ':'✗ '}${c}</td></tr>`).join('')}
+    </tbody></table>
+  </section>
+
+  <section>
+    <h2>Типографика</h2>
+    <p class="cap">Заголовки — Manrope. Текст — Inter. Обе с лицензией SIL OFL.</p>
+    <div class="warn"><b>Ограничение, определившее выбор.</b> Гарнитура обязана покрывать казахскую
+      кириллицу: <b style="font-size:17px">ә ғ қ ң ө ұ ү һ і Ә Ғ Қ Ң Ө Ұ Ү Һ І</b>.
+      У большинства популярных шрифтов этих глифов нет — на казахской версии они подменяются
+      системным шрифтом, и текст «плывёт». Проверяется до выбора, а не после сдачи.</div>
+    <div style="border:1px solid var(--s-200);border-radius:8px;padding:26px">
+      <div style="font-family:var(--disp);font-size:60px;font-weight:800;line-height:1.05;letter-spacing:-.03em">Display 60</div>
+      <div style="font-family:var(--disp);font-size:44px;font-weight:700;margin-top:18px;letter-spacing:-.02em">Заголовок H1 44</div>
+      <div style="font-family:var(--disp);font-size:32px;font-weight:700;margin-top:14px">Заголовок H2 32</div>
+      <div style="font-family:var(--disp);font-size:24px;font-weight:700;margin-top:12px">Заголовок H3 24</div>
+      <div style="font-size:20px;color:var(--s-600);margin-top:16px;line-height:1.6">Lead 20 — вводный абзац раздела, задаёт контекст.</div>
+      <div style="font-size:17px;margin-top:12px;max-width:68ch">Body 17 — основной текст. Кегль намеренно 17, а не 16:
+        аудитория включает пожилых пользователей и госслужащих. Это дешевле, чем отправлять всех в режим для слабовидящих.
+        Длина строки ограничена 68–72 символами.</div>
+      <div style="font-size:14px;color:var(--s-500);margin-top:12px">Small 14 — подписи, даты, метаданные</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Компоненты</h2><p class="cap">Реализация: React + Tailwind + shadcn/ui, общий пакет для сайта и админки.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:22px">
+      <a class="btn btn-p" href="#">Основная кнопка</a>
+      <a class="btn btn-s" href="#">Вторичная</a>
+      <a class="btn btn-p btn-sm" href="#">Компактная</a>
+      <span class="tag">Тег раздела</span><span class="tag tag-g">Акцентный тег</span>
+    </div>
+    <div style="background:var(--green-700);padding:22px;border-radius:8px;margin-bottom:22px">
+      <a class="btn btn-g" href="#">Кнопка на тёмном фоне</a></div>
+    <div class="grid3">
+      <div class="stat"><b>2 500</b><span>гектаров территории кластера</span></div>
+      <div class="stat"><b>12</b><span>объектов инфраструктуры</span></div>
+      <div class="stat"><b>2030</b><span>год завершения проекта</span></div>
+    </div>
+    <div style="max-width:420px;margin-top:26px">
+      <div class="fld"><label>Поле ввода</label><input placeholder="Введите значение"></div>
+      <div class="fld"><label>Фокус всегда виден — требование п. VI</label><input style="outline:2px solid var(--green-600);border-color:var(--green-600)" value="Состояние фокуса"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Дизайн под ограничение производительности</h2>
+    <p class="cap">PageSpeed 90/80 (п. VIII) — вход в дизайн, а не постобработка.</p>
+    <table><thead><tr><th>Решение</th><th>Причина</th></tr></thead><tbody>
+      ${[['Герой: постер как LCP, видео после load','Видео в LCP гарантированно валит Mobile'],
+         ['На мобильных статичный кадр вместо видео','Экономия трафика и CPU'],
+         ['5 начертаний, сабсет по трём алфавитам','≤ 120 КБ вместо ~400 КБ'],
+         ['Явные width/height у всех изображений','CLS = 0'],
+         ['Иконки — инлайн SVG, без иконочных шрифтов','Минус блокирующий ресурс'],
+         ['Анимации только transform и opacity','Не вызывают перерасчёт макета'],
+         ['Никаких сторонних виджетов','Каждый внешний скрипт — минус баллы']]
+        .map(([a,b])=>`<tr><td><b>${a}</b></td><td style="color:var(--s-600)">${b}</td></tr>`).join('')}
+    </tbody></table>
+  </section>
+</div>`};
+
+S.home={t:'Главная',grp:'Публичный сайт',html:()=>hdr('home')+`
+<section class="hero">${mtn(1)}
+  <div class="wrap">
+    <div class="eyebrow">Алматинский горный кластер</div>
+    <h1>Горы Алматы — новая точка притяжения</h1>
+    <p>Создаём современный горнолыжный и туристический кластер мирового уровня,
+       сохраняя природу Заилийского Алатау.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <a class="btn btn-p" href="#">О проекте</a>
+      <a class="btn btn-g" href="#">Последние новости</a>
+    </div>
+  </div>
+  <div class="play"><b>▶</b> Смотреть видео о проекте</div>
+</section>
+
+<section class="sec"><div class="wrap"><div class="grid2">
+  <div>
+    <div class="eyebrow">О проекте</div>
+    <h2>Единый оператор развития горного кластера</h2>
+    <p class="lead" style="margin:16px 0 24px">ТОО «Almaty Tau Management» отвечает за
+      комплексное развитие территории: инфраструктуру, транспортную доступность,
+      туристические объекты и экологическую устойчивость.</p>
+    <a class="btn btn-s" href="#">Подробнее о проекте →</a>
+  </div>
+  <div style="position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden">${mtn(0)}</div>
+</div></div></section>
+
+<section class="sec alt"><div class="wrap">
+  <div class="eyebrow">Ключевые показатели</div>
+  <h2 style="margin-bottom:44px">Проект в цифрах</h2>
+  <div class="grid4">
+    <div class="stat"><b>2 500</b><span>гектаров территории кластера</span></div>
+    <div class="stat"><b>12</b><span>объектов инфраструктуры</span></div>
+    <div class="stat"><b>4 млн</b><span>посетителей в год к 2030</span></div>
+    <div class="stat"><b>2030</b><span>год завершения проекта</span></div>
+  </div>
+</div></section>
+
+<section class="sec"><div class="wrap">
+  <div class="head"><div>
+    <div class="eyebrow">Территория</div>
+    <h2>Интерактивная карта кластера</h2></div></div>
+  <div style="position:relative;aspect-ratio:21/9;border-radius:8px;overflow:hidden;background:var(--green-50);
+    border:1px solid var(--s-200);display:grid;place-items:center">
+    ${mtn(1)}
+    <div style="position:relative;z-index:3;color:#fff;text-align:center">
+      <div style="font-family:var(--disp);font-size:24px;font-weight:700">Интерактивная карта территории</div>
+      <div style="font-size:15px;opacity:.85;margin-top:6px">2GIS · задел под цифровой двойник (п. VI ТЗ)</div>
+    </div>
+  </div>
+</div></section>
+
+<section class="sec alt"><div class="wrap">
+  <div class="head">
+    <div><div class="eyebrow">Медиацентр</div><h2>Последние новости</h2></div>
+    <a class="btn btn-s" href="#">Все новости →</a>
+  </div>
+  <div class="grid3">
+    ${[['15 июля 2026','Начаты работы по строительству первой очереди канатной дороги','Проект предусматривает возведение современной гондольной дороги протяжённостью 4,2 км.'],
+       ['08 июля 2026','Подписан меморандум с международным оператором курортов','Соглашение охватывает передачу опыта эксплуатации горнолыжной инфраструктуры.'],
+       ['01 июля 2026','Утверждён мастер-план развития территории до 2030 года','Документ определяет этапы освоения и экологические ограничения.']]
+      .map(([d,h,p])=>`<article class="card">
+        <div class="im" style="position:relative">${mtn(0)}</div>
+        <div class="bd"><span class="dt">${d}</span>
+          <h3><a href="#">${h}</a></h3><p>${p}</p></div></article>`).join('')}
+  </div>
+</div></section>`+ftr()};
+
+S.news={t:'Новости — список',html:()=>hdr('news')+`
+<div class="wrap" style="padding-top:28px;font-size:13px;color:var(--s-500)">Главная / Медиацентр / Новости</div>
+<section class="sec" style="padding-top:24px"><div class="wrap">
+  <div class="eyebrow">Медиацентр</div>
+  <h1 style="font-size:44px;margin-bottom:32px">Новости</h1>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:36px;padding-bottom:24px;border-bottom:1px solid var(--s-200)">
+    <input placeholder="⌕  Поиск по новостям" style="flex:1;min-width:220px;font:inherit;font-size:16px;
+      padding:11px 16px;border:1px solid var(--s-300);border-radius:6px;font-family:var(--text)">
+    <select style="font:inherit;font-size:15px;padding:11px 14px;border:1px solid var(--s-300);border-radius:6px;font-family:var(--text)">
+      <option>Все годы</option><option>2026</option><option>2025</option></select>
+    <select style="font:inherit;font-size:15px;padding:11px 14px;border:1px solid var(--s-300);border-radius:6px;font-family:var(--text)">
+      <option>Сначала новые</option><option>Сначала старые</option></select>
+  </div>
+  <div class="grid3">
+    ${[['15 июля 2026','Начаты работы по строительству первой очереди канатной дороги'],
+       ['08 июля 2026','Подписан меморандум с международным оператором курортов'],
+       ['01 июля 2026','Утверждён мастер-план развития территории до 2030 года'],
+       ['24 июня 2026','Проведены общественные слушания по экологической оценке'],
+       ['17 июня 2026','Открыт приём заявок от инвесторов на участие в проекте'],
+       ['05 июня 2026','Завершено проектирование транспортной развязки']]
+      .map(([d,h])=>`<article class="card"><div class="im" style="position:relative">${mtn(0)}</div>
+        <div class="bd"><span class="dt">${d}</span><h3><a href="#">${h}</a></h3>
+        <p>Краткое описание публикации в две-три строки для предпросмотра в ленте.</p></div></article>`).join('')}
+  </div>
+  <div style="text-align:center;margin-top:44px"><a class="btn btn-s" href="#">Показать ещё</a></div>
+</div></section>`+ftr()};
+
+S.newsItem={t:'Новость — детальная',html:()=>hdr('news')+`
+<div class="wrap" style="padding-top:28px;font-size:13px;color:var(--s-500)">Главная / Медиацентр / Новости / Публикация</div>
+<article class="wrap" style="padding-top:24px;padding-bottom:56px">
+  <div style="max-width:760px">
+    <span class="tag">Инфраструктура</span>
+    <h1 style="font-size:44px;margin:18px 0 16px">Начаты работы по строительству первой очереди канатной дороги</h1>
+    <div style="display:flex;gap:18px;font-size:14px;color:var(--s-500);padding-bottom:24px;border-bottom:1px solid var(--s-200)">
+      <span>15 июля 2026</span><span>·</span><span>Пресс-служба ATM</span>
+    </div>
+  </div>
+  <div style="position:relative;aspect-ratio:16/9;margin:32px 0;border-radius:8px;overflow:hidden">${mtn(1)}</div>
+  <div style="max-width:760px;font-size:17px;line-height:1.75">
+    <p style="font-size:20px;color:var(--s-600);line-height:1.6">Проект предусматривает возведение
+      современной гондольной дороги протяжённостью 4,2 километра с пропускной способностью
+      до 2 400 человек в час.</p>
+    <p>Строительство ведётся с соблюдением экологических требований, установленных по итогам
+      общественных слушаний. Маршрут трассы скорректирован таким образом, чтобы минимизировать
+      воздействие на реликтовые еловые массивы.</p>
+    <h3 style="font-size:24px;margin:32px 0 14px">Этапы реализации</h3>
+    <p>Первая очередь включает нижнюю и верхнюю станции, четыре опоры и систему
+      аварийного электроснабжения. Ввод в эксплуатацию запланирован на четвёртый квартал.</p>
+    <div class="grid3" style="margin:32px 0">
+      ${'<div style="position:relative;aspect-ratio:3/2;border-radius:6px;overflow:hidden">'+mtn(0)+'</div>'.repeat(3)}
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:24px;border-top:1px solid var(--s-200)">
+      <a class="btn btn-s btn-sm" href="#">↗ Поделиться</a>
+      <a class="btn btn-s btn-sm" href="#">⤓ Скачать фото в высоком разрешении</a>
+    </div>
+  </div>
+</article>
+<section class="sec alt"><div class="wrap">
+  <h2 style="margin-bottom:32px">Похожие новости</h2>
+  <div class="grid3">
+    ${[['08 июля 2026','Подписан меморандум с международным оператором'],
+       ['01 июля 2026','Утверждён мастер-план развития до 2030 года'],
+       ['24 июня 2026','Проведены общественные слушания']]
+      .map(([d,h])=>`<article class="card"><div class="im" style="position:relative">${mtn(0)}</div>
+        <div class="bd"><span class="dt">${d}</span><h3><a href="#">${h}</a></h3></div></article>`).join('')}
+  </div>
+</div></section>`+ftr()};
+
+S.docs={t:'Документы',html:()=>hdr('')+`
+<div class="wrap" style="padding-top:28px;font-size:13px;color:var(--s-500)">Главная / Корпоративная информация / Документы</div>
+<section class="sec" style="padding-top:24px"><div class="wrap">
+  <div class="eyebrow">Корпоративная информация</div>
+  <h1 style="font-size:44px;margin-bottom:14px">Внутренние нормативные документы</h1>
+  <p class="lead" style="margin-bottom:40px">Действующие внутренние документы ТОО «Almaty Tau Management».</p>
+  <div style="display:grid;grid-template-columns:250px 1fr;gap:40px" class="dgrid">
+    <nav>
+      <h4 style="font-family:var(--text);font-size:13px;text-transform:uppercase;letter-spacing:.06em;
+        color:var(--s-500);margin-bottom:14px">Категории</h4>
+      ${[['Все документы',1],['Учредительные',0],['Положения',0],['Регламенты',0],['Отчётность',0]]
+        .map(([n,on])=>`<a href="#" style="display:block;padding:9px 14px;border-radius:6px;text-decoration:none;
+          font-size:15px;margin-bottom:3px;${on?'background:var(--green-50);color:var(--green-700);font-weight:600':'color:var(--s-700)'}">${n}</a>`).join('')}
+    </nav>
+    <div>
+      <input placeholder="⌕  Поиск по документам" style="width:100%;font:inherit;font-size:16px;
+        padding:11px 16px;border:1px solid var(--s-300);border-radius:6px;margin-bottom:20px;font-family:var(--text)">
+      ${[['Устав ТОО «Almaty Tau Management»','PDF','2,4 МБ','ред. от 12.03.2026'],
+         ['Положение о Правлении','PDF','680 КБ','ред. от 04.02.2026'],
+         ['Положение о Наблюдательном совете','PDF','540 КБ','ред. от 04.02.2026'],
+         ['Регламент закупочной деятельности','DOCX','1,1 МБ','ред. от 20.01.2026'],
+         ['Кодекс деловой этики','PDF','320 КБ','ред. от 15.12.2025']]
+        .map(([n,f,s,d])=>`<div class="doc"><div class="ico">${f}</div>
+          <div class="in"><b>${n}</b><span>${f} · ${s} · ${d}</span></div>
+          <a class="btn btn-s btn-sm" href="#">Скачать</a></div>`).join('')}
+    </div>
+  </div>
+</div></section>`+ftr()};
+
+S.contacts={t:'Контакты',html:()=>hdr('contacts')+`
+<div class="wrap" style="padding-top:28px;font-size:13px;color:var(--s-500)">Главная / Контакты</div>
+<section class="sec" style="padding-top:24px"><div class="wrap">
+  <div class="eyebrow">Связаться с нами</div>
+  <h1 style="font-size:44px;margin-bottom:40px">Контакты</h1>
+  <div class="grid2" style="align-items:start;gap:44px">
+    <div>
+      <div style="border:1px solid var(--s-200);border-radius:8px;padding:26px;margin-bottom:20px">
+        <h3 style="font-size:19px;margin-bottom:16px">ТОО «Almaty Tau Management»</h3>
+        ${[['Адрес','г. Алматы, ул. Байзакова 303, 2 этаж'],['Телефон','+7 (727) 000-00-00'],
+           ['Электронная почта','info@atm.kz'],['Режим работы','Пн–Пт, 09:00–18:00']]
+          .map(([k,v])=>`<div style="display:flex;gap:16px;padding:10px 0;border-bottom:1px solid var(--s-100)">
+            <span style="width:150px;flex:none;font-size:14px;color:var(--s-500)">${k}</span>
+            <b style="font-weight:600;font-size:15px">${v}</b></div>`).join('')}
+      </div>
+      <div style="border:1px solid var(--s-200);border-radius:8px;padding:26px">
+        <h3 style="font-size:19px;margin-bottom:6px">Форма обратной связи</h3>
+        <p style="font-size:14px;color:var(--s-500);margin:0 0 18px">Ответим в течение трёх рабочих дней.</p>
+        <div class="fld"><label>Имя <span style="color:#a8322a">*</span></label><input></div>
+        <div class="fld"><label>Электронная почта <span style="color:#a8322a">*</span></label><input type="email"></div>
+        <div class="fld"><label>Сообщение <span style="color:#a8322a">*</span></label><textarea></textarea></div>
+        <label style="display:flex;gap:10px;font-size:13.5px;color:var(--s-600);line-height:1.5;margin-bottom:18px">
+          <input type="checkbox" style="width:auto;margin-top:3px">
+          <span>Согласен на обработку персональных данных в соответствии с Законом РК
+            «О персональных данных и их защите»</span></label>
+        <a class="btn btn-p" href="#">Отправить сообщение</a>
+      </div>
+    </div>
+    <div style="position:sticky;top:70px">
+      <div style="position:relative;aspect-ratio:3/4;border-radius:8px;overflow:hidden;
+        background:var(--green-50);border:1px solid var(--s-200);display:grid;place-items:center">
+        <div style="position:absolute;inset:0;background:
+          repeating-linear-gradient(0deg,#e8edeb 0 1px,transparent 1px 46px),
+          repeating-linear-gradient(90deg,#e8edeb 0 1px,transparent 1px 46px),#f4f7f6"></div>
+        <div style="position:relative;text-align:center">
+          <div style="width:34px;height:34px;margin:0 auto 10px;border-radius:50% 50% 50% 0;
+            transform:rotate(-45deg);background:var(--green-600);box-shadow:var(--sh-2)"></div>
+          <b style="font-size:15px">ул. Байзакова 303</b>
+          <div style="font-size:13px;color:var(--s-500);margin-top:4px">Интерактивная карта · 2GIS</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>`+ftr()};
+
+S.a11y={t:'Режим для слабовидящих',grp:'Режимы',html:()=>`
+<div class="a11y">
+  <div class="bar2"><b>ALMATY TAU MANAGEMENT</b>
+    <span style="margin-left:auto">А&nbsp; А&nbsp; <b style="font-size:28px">А</b></span>
+    <span>Ч/Б</span><span>Б/Ч</span><span style="background:#FFE600;color:#000">Ж/Ч</span><span>С/Г</span>
+    <span>Изображения: выкл</span><span>Обычная версия</span></div>
+  <div class="ct">
+    <div style="border-bottom:3px solid #FFE600;padding-bottom:14px;margin-bottom:26px;font-size:18px">
+      Главная / Медиацентр / Новости</div>
+    <h1>Начаты работы по строительству первой очереди канатной дороги</h1>
+    <div style="font-size:18px;margin-bottom:24px">15 июля 2026 · Пресс-служба ATM</div>
+    <div class="alt">[Изображение: строительная площадка нижней станции канатной дороги
+      на фоне Заилийского Алатау — описание из обязательного поля alt]</div>
+    <p>Проект предусматривает возведение современной гондольной дороги протяжённостью
+      4,2 километра с пропускной способностью до 2 400 человек в час.</p>
+    <p>Строительство ведётся с соблюдением экологических требований, установленных
+      по итогам общественных слушаний.</p>
+  </div>
+</div>
+<div style="padding:26px 48px;background:#fff">
+  <div class="warn" style="margin:0"><b>П. VI ТЗ, обязательно по закону о доступности
+    интернет-ресурсов госсектора.</b> Это полноценная тема сайта, а не сторонний виджет и не CSS-фильтр:
+    настройка хранится в cookie и применяется на сервере, поэтому страница не мигает при загрузке.
+    Четыре цветовые схемы, три ступени кегля (100/130/160 %), отключение изображений с заменой
+    на текст из <code>alt</code>, отключение анимаций. Поле <code>alt</code> сделано обязательным
+    в админке — без него изображение не сохранится.</div>
+</div>`};
+
+/* =============== роутер =============== */
+const ORDER=['style','home','news','newsItem','docs','contacts','a11y'];
+const menu=document.getElementById('menu');let last=null;
+ORDER.forEach(k=>{const s=S[k];
+  if(s.grp&&s.grp!==last){last=s.grp;const g=document.createElement('div');g.className='grp';g.textContent=s.grp;menu.appendChild(g);}
+  const a=document.createElement('a');a.dataset.k=k;a.textContent=s.t;a.onclick=()=>show(k);menu.appendChild(a);});
+function show(k){document.getElementById('dev').innerHTML=S[k].html();
+  document.getElementById('t').textContent=S[k].t;
+  [...menu.querySelectorAll('a')].forEach(a=>a.classList.toggle('on',a.dataset.k===k));
+  scrollTo(0,0);location.hash=k;}
+document.getElementById('bD').onclick=e=>{document.body.classList.remove('mob');e.target.classList.add('on');document.getElementById('bM').classList.remove('on')};
+document.getElementById('bM').onclick=e=>{document.body.classList.add('mob');e.target.classList.add('on');document.getElementById('bD').classList.remove('on')};
+show(ORDER.includes(location.hash.slice(1))?location.hash.slice(1):'style');
+</script>
+</body>
+</html>

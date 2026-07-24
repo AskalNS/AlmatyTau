@@ -1,0 +1,25 @@
+.cover {
+  width: 100%;
+  overflow: hidden;
+}
+.header {
+  max-width: 820px;
+  margin-bottom: 40px;
+}
+.title {
+  font-size: 44px;
+  margin-bottom: 16px;
+}
+@media (max-width: 768px) {
+  .title {
+    font-size: 30px;
+  }
+}
+.lead {
+  font-size: 20px;
+  color: var(--s-600);
+  line-height: 1.6;
+}
+.body {
+  max-width: 1000px;
+}

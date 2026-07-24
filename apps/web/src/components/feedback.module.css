@@ -1,0 +1,107 @@
+.form {
+  border: 1px solid var(--s-200);
+  border-radius: 8px;
+  padding: 26px;
+}
+.formTitle {
+  font-size: 19px;
+  margin-bottom: 18px;
+}
+.field {
+  margin-bottom: 16px;
+}
+.field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.field label span {
+  color: #a8322a;
+}
+.field input,
+.field textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 16px;
+  padding: 11px 14px;
+  border: 1px solid var(--s-300);
+  border-radius: var(--r-btn);
+  font-family: var(--font-text);
+}
+.field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+.field input:focus,
+.field textarea:focus {
+  outline: 2px solid var(--green-600);
+  border-color: var(--green-600);
+}
+.error {
+  display: block;
+  color: #a8322a;
+  font-size: 13px;
+  margin-top: 4px;
+}
+.consent {
+  display: flex;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--s-600);
+  line-height: 1.5;
+  margin-bottom: 18px;
+  cursor: pointer;
+}
+.consent input {
+  margin-top: 3px;
+  flex: none;
+}
+.success {
+  border: 1px solid var(--green-300);
+  background: var(--green-50);
+  color: var(--green-700);
+  border-radius: 8px;
+  padding: 26px;
+  font-weight: 600;
+}
+
+.mapWrap {
+  position: sticky;
+  top: 24px;
+  aspect-ratio: 3 / 4;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--s-200);
+}
+@media (max-width: 900px) {
+  .mapWrap {
+    position: static;
+    aspect-ratio: 4 / 3;
+  }
+}
+.mapFrame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.mapPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--green-50);
+  color: var(--s-600);
+  text-align: center;
+  padding: 20px;
+}
+.mapPin {
+  width: 30px;
+  height: 30px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--green-600);
+}

@@ -1,0 +1,47 @@
+.burger {
+  display: none;
+  margin-left: auto;
+  font-size: 22px;
+  background: none;
+  border: 1px solid var(--s-200);
+  border-radius: 6px;
+  width: 42px;
+  height: 42px;
+  cursor: pointer;
+  color: var(--s-700);
+}
+@media (max-width: 1024px) {
+  .burger {
+    display: block;
+  }
+}
+
+.panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-bottom: 1px solid var(--s-200);
+  box-shadow: var(--sh-2);
+  padding: 12px 24px 24px;
+  max-height: calc(100vh - 62px);
+  overflow-y: auto;
+}
+.group {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--s-100);
+}
+.link {
+  display: block;
+  padding: 8px 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--s-900);
+}
+.childLink {
+  display: block;
+  padding: 6px 0 6px 16px;
+  font-size: 15px;
+  color: var(--s-600);
+}

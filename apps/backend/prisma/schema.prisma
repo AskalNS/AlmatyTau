@@ -1,0 +1,842 @@
+// =============================================================================
+//  ТОО «Almaty Tau Management» — схема базы данных
+//
+//  Принцип, определяющий всю структуру: сущность хранит нейтральные к языку
+//  поля (slug, даты, обложка, статус), а тексты вынесены в отдельную таблицу
+//  переводов — по одной записи на язык. Это «отдельная структура контента
+//  и независимое редактирование» из п. III ТЗ.
+//
+//  Следствие: если перевода на язык нет, сущность на этом языке просто
+//  не существует и НЕ подменяется другим языком.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+  // native — для разработки на Windows/macOS,
+  // musl — для Alpine-образа, в котором приложение работает в Docker.
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+//  Перечисления
+// =============================================================================
+
+enum Locale {
+  kk
+  ru
+  en
+}
+
+/// Ровно две роли, как предписывает п. V ТЗ.
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+enum PublishStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MediaKind {
+  IMAGE
+  VIDEO
+  FILE
+}
+
+enum PersonBoard {
+  MANAGEMENT
+  SUPERVISORY
+}
+
+enum LinkGroup {
+  GOVERNMENT
+  PARTNERS
+  PROCUREMENT
+  OTHER
+}
+
+enum MenuLocation {
+  MAIN
+  FOOTER
+}
+
+enum HomeSectionType {
+  hero
+  about
+  stats
+  map
+  news
+  directions
+  partners
+}
+
+enum AuditAction {
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  LOGOUT
+  ACCOUNT_LOCKED
+  PASSWORD_CHANGED
+  TOTP_ENABLED
+  TOTP_DISABLED
+  USER_INVITED
+  USER_UPDATED
+  USER_DEACTIVATED
+  CREATE
+  UPDATE
+  DELETE
+  PUBLISH
+  UNPUBLISH
+  UPLOAD
+  SETTINGS_UPDATED
+}
+
+// =============================================================================
+//  Пользователи и доступ (пп. V, X.II ТЗ)
+// =============================================================================
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  name         String
+  /// argon2id. Пусто, пока пользователь не принял приглашение.
+  passwordHash String?
+  role         Role    @default(EDITOR)
+  isActive     Boolean @default(true)
+
+  /// Язык интерфейса админки. Не связан с языком редактируемого контента:
+  /// редактор может не владеть русским, но вести русскую версию сайта.
+  uiLocale Locale @default(ru)
+
+  // --- Двухфакторная аутентификация (п. X.II ТЗ) ---
+  /// Секрет TOTP в base32, зашифрован на уровне приложения.
+  totpSecret       String?
+  twoFactorEnabled Boolean @default(false)
+  /// Хеши одноразовых кодов восстановления.
+  recoveryCodes    String[] @default([])
+
+  // --- Защита от перебора (п. X.II ТЗ) ---
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  lastLoginAt    DateTime?
+  lastLoginIp    String?
+
+  /// Принудительная смена пароля при первом входе.
+  mustChangePassword Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+  invites       Invite[]       @relation("InvitedBy")
+  auditLogs     AuditLog[]
+  uploads       Media[]
+
+  @@index([email])
+  @@index([isActive])
+  @@map("users")
+}
+
+model RefreshToken {
+  id     String @id @default(cuid())
+  /// Хранится хеш, а не сам токен: утечка дампа БД не даёт войти.
+  tokenHash String @unique
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt DateTime
+  revokedAt DateTime?
+  ip        String?
+  userAgent String?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model Invite {
+  id        String   @id @default(cuid())
+  email     String
+  name      String
+  role      Role     @default(EDITOR)
+  tokenHash String   @unique
+  expiresAt DateTime
+  acceptedAt DateTime?
+
+  invitedById String?
+  invitedBy   User?   @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@map("invites")
+}
+
+/// Журнал действий пользователей (п. X.IV ТЗ).
+model AuditLog {
+  id     String      @id @default(cuid())
+  action AuditAction
+
+  /// Тип и идентификатор объекта. Пусто для входов в систему.
+  entity      String?
+  entityId    String?
+  /// Название объекта на момент действия: объект могли переименовать
+  /// или удалить, а журнал должен остаться читаемым.
+  entityLabel String?
+
+  userId    String?
+  user      User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  /// Дублируются на случай удаления пользователя.
+  userEmail String?
+  userName  String?
+
+  ip        String?
+  userAgent String?
+  /// Что изменилось: { "поле": [было, стало] }
+  changes   Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@index([userId])
+  @@index([action])
+  @@index([entity, entityId])
+  @@map("audit_logs")
+}
+
+// =============================================================================
+//  Медиафайлы (пп. 5.2, VI, VIII ТЗ)
+// =============================================================================
+
+model Media {
+  id           String    @id @default(cuid())
+  kind         MediaKind
+  originalName String
+  mime         String
+  size         Int
+
+  /// Ключ исходника в объектном хранилище.
+  storageKey String
+  width      Int?
+  height     Int?
+  duration   Int?
+
+  /// Заглушка на время загрузки: убирает дёрганье вёрстки (п. VIII ТЗ).
+  blurhash String?
+
+  /// Производные форматы: [{ width, height, avif, webp, fallback }]
+  variants Json @default("[]")
+
+  /// Альтернативный текст по языкам: { "ru": "...", "kk": "..." }.
+  /// Обязателен минимум на одном языке — проверяется на уровне приложения.
+  /// Без этого требование п. VI о версии для слабовидящих не выполняется:
+  /// alt, не обязательный на входе, через месяц отсутствует везде.
+  alt     Json @default("{}")
+  caption Json @default("{}")
+
+  /// Требования п. 5.2 ТЗ к сопроводительной информации.
+  source  String?
+  takenAt DateTime?
+
+  uploadedById String?
+  uploadedBy   User?   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  albumItems      AlbumMedia[]
+  albumCovers     Album[]      @relation("AlbumCover")
+  newsCovers      News[]       @relation("NewsCover")
+  pageCovers      Page[]       @relation("PageCover")
+  personPhotos    Person[]     @relation("PersonPhoto")
+  linkLogos       Link[]       @relation("LinkLogo")
+  documentFiles   Document[]   @relation("DocumentFile")
+  heroPosters     HomeSection[] @relation("HeroPoster")
+  heroVideos      HomeSection[] @relation("HeroVideo")
+
+  @@index([kind])
+  @@index([createdAt(sort: Desc)])
+  @@map("media")
+}
+
+// =============================================================================
+//  Медиагалерея — альбомы (п. 5.2 ТЗ)
+// =============================================================================
+
+model Album {
+  id     String        @id @default(cuid())
+  slug   String        @unique
+  status PublishStatus @default(DRAFT)
+  publishedAt DateTime?
+
+  coverId String?
+  cover   Media?  @relation("AlbumCover", fields: [coverId], references: [id], onDelete: SetNull)
+
+  order Int @default(0)
+
+  items        AlbumMedia[]
+  translations AlbumTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, publishedAt(sort: Desc)])
+  @@map("albums")
+}
+
+model AlbumTranslation {
+  id      String @id @default(cuid())
+  albumId String
+  album   Album  @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  locale  Locale
+
+  title       String
+  description String?
+
+  @@unique([albumId, locale])
+  @@map("album_translations")
+}
+
+model AlbumMedia {
+  albumId String
+  album   Album  @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  mediaId String
+  media   Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  order   Int    @default(0)
+
+  @@id([albumId, mediaId])
+  @@index([albumId, order])
+  @@map("album_media")
+}
+
+// =============================================================================
+//  Страницы (пп. 2.1, 2.4, 3, 4.2 ТЗ)
+// =============================================================================
+
+model Page {
+  id String @id @default(cuid())
+
+  /// Полный путь без языкового префикса: company/about, project, corporate.
+  path String @unique
+
+  parentId String?
+  parent   Page?   @relation("PageTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children Page[]  @relation("PageTree")
+
+  coverId String?
+  cover   Media?  @relation("PageCover", fields: [coverId], references: [id], onDelete: SetNull)
+
+  status PublishStatus @default(DRAFT)
+  order  Int           @default(0)
+
+  /// Системные страницы (контакты, поиск, 404) удалять нельзя:
+  /// на них завязана навигация. Содержимое редактируется свободно.
+  isSystem Boolean @default(false)
+
+  translations PageTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([parentId, order])
+  @@map("pages")
+}
+
+model PageTranslation {
+  id     String @id @default(cuid())
+  pageId String
+  page   Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  locale Locale
+
+  title String
+  lead  String?
+  /// Массив блоков — см. blockSchema в @atm/contracts.
+  blocks Json @default("[]")
+
+  seoTitle       String?
+  seoDescription String?
+  seoOgImageId   String?
+  seoNoindex     Boolean @default(false)
+
+  @@unique([pageId, locale])
+  @@map("page_translations")
+}
+
+// =============================================================================
+//  Новости (п. 5.1 ТЗ)
+// =============================================================================
+
+model NewsCategory {
+  id    String @id @default(cuid())
+  slug  String @unique
+  order Int    @default(0)
+
+  translations NewsCategoryTranslation[]
+  news         News[]
+
+  @@map("news_categories")
+}
+
+model NewsCategoryTranslation {
+  id         String       @id @default(cuid())
+  categoryId String
+  category   NewsCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  locale     Locale
+  title      String
+
+  @@unique([categoryId, locale])
+  @@map("news_category_translations")
+}
+
+model News {
+  id   String @id @default(cuid())
+  slug String @unique
+
+  coverId String?
+  cover   Media?  @relation("NewsCover", fields: [coverId], references: [id], onDelete: SetNull)
+
+  categoryId String?
+  category   NewsCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  status      PublishStatus @default(DRAFT)
+  publishedAt DateTime?
+  isPinned    Boolean       @default(false)
+
+  translations NewsTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Основной индекс ленты: фильтр по статусу, сортировка по дате,
+  /// закреплённые сверху. Без него лента упирается в seq scan.
+  @@index([status, publishedAt(sort: Desc)])
+  @@index([isPinned, publishedAt(sort: Desc)])
+  @@index([categoryId])
+  @@map("news")
+}
+
+model NewsTranslation {
+  id     String @id @default(cuid())
+  newsId String
+  news   News   @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  locale Locale
+
+  title   String
+  excerpt String?
+  blocks  Json    @default("[]")
+
+  seoTitle       String?
+  seoDescription String?
+  seoOgImageId   String?
+  seoNoindex     Boolean @default(false)
+
+  @@unique([newsId, locale])
+  @@index([locale])
+  @@map("news_translations")
+}
+
+// =============================================================================
+//  Персоны: Правление и Наблюдательный совет (пп. 2.2, 2.3 ТЗ)
+// =============================================================================
+
+model Person {
+  id    String      @id @default(cuid())
+  slug  String      @unique
+  board PersonBoard
+
+  photoId String?
+  photo   Media?  @relation("PersonPhoto", fields: [photoId], references: [id], onDelete: SetNull)
+
+  order  Int           @default(0)
+  status PublishStatus @default(DRAFT)
+
+  translations PersonTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([board, order])
+  @@index([status])
+  @@map("persons")
+}
+
+model PersonTranslation {
+  id       String @id @default(cuid())
+  personId String
+  person   Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  locale   Locale
+
+  /// ФИО переводится: казахское и русское написание различаются.
+  fullName String
+  position String
+  bio      String?
+
+  @@unique([personId, locale])
+  @@map("person_translations")
+}
+
+// =============================================================================
+//  Документы (п. 4.1 ТЗ)
+// =============================================================================
+
+model DocumentCategory {
+  id    String @id @default(cuid())
+  slug  String @unique
+  order Int    @default(0)
+
+  translations DocumentCategoryTranslation[]
+  documents    Document[]
+
+  @@map("document_categories")
+}
+
+model DocumentCategoryTranslation {
+  id         String           @id @default(cuid())
+  categoryId String
+  category   DocumentCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  locale     Locale
+  title      String
+
+  @@unique([categoryId, locale])
+  @@map("document_category_translations")
+}
+
+model Document {
+  id String @id @default(cuid())
+
+  categoryId String?
+  category   DocumentCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  fileId String
+  file   Media  @relation("DocumentFile", fields: [fileId], references: [id], onDelete: Restrict)
+
+  /// Снимок метаданных файла на момент привязки: имя, размер, MIME.
+  /// Денормализовано для быстрого списка без джойна к media на каждой строке.
+  fileName String
+  fileSize Int
+  fileMime String
+
+  /// Дата редакции документа, а не дата загрузки в систему.
+  documentDate DateTime?
+
+  /// Номер редакции. Замена файла увеличивает его, но id документа
+  /// и публичная ссылка сохраняются: на внутренние НПА ссылаются
+  /// из писем и других документов Заказчика, и эти ссылки не должны рваться.
+  revision Int @default(1)
+
+  status PublishStatus @default(PUBLISHED)
+  order  Int           @default(0)
+
+  translations DocumentTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId, order])
+  @@index([status])
+  @@map("documents")
+}
+
+model DocumentTranslation {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  locale     Locale
+
+  title       String
+  description String?
+
+  @@unique([documentId, locale])
+  @@map("document_translations")
+}
+
+// =============================================================================
+//  Вакансии (п. 4.3 ТЗ)
+// =============================================================================
+
+model Vacancy {
+  id   String @id @default(cuid())
+  slug String @unique
+
+  status      PublishStatus @default(DRAFT)
+  publishedAt DateTime?
+  /// Срок приёма документов. По его истечении вакансия уходит из списка.
+  deadline     DateTime?
+  contactEmail String?
+
+  translations VacancyTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, publishedAt(sort: Desc)])
+  @@index([deadline])
+  @@map("vacancies")
+}
+
+model VacancyTranslation {
+  id        String  @id @default(cuid())
+  vacancyId String
+  vacancy   Vacancy @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  locale    Locale
+
+  title            String
+  department       String?
+  requirements     String?
+  conditions       String?
+  responsibilities String?
+
+  seoTitle       String?
+  seoDescription String?
+
+  @@unique([vacancyId, locale])
+  @@map("vacancy_translations")
+}
+
+// =============================================================================
+//  Ссылки на внешние ресурсы (п. VI ТЗ)
+// =============================================================================
+
+model Link {
+  id    String    @id @default(cuid())
+  url   String
+  group LinkGroup @default(OTHER)
+
+  logoId String?
+  logo   Media?  @relation("LinkLogo", fields: [logoId], references: [id], onDelete: SetNull)
+
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+
+  translations LinkTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([group, order])
+  @@map("links")
+}
+
+model LinkTranslation {
+  id     String @id @default(cuid())
+  linkId String
+  link   Link   @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  locale Locale
+
+  title       String
+  description String?
+
+  @@unique([linkId, locale])
+  @@map("link_translations")
+}
+
+// =============================================================================
+//  Меню (п. IV ТЗ)
+//
+//  Хранится деревом в БД, а не в коде: ТЗ разрешает Заказчику менять
+//  структуру и наименования разделов на любом этапе, и переименование
+//  пункта не должно быть релизом.
+// =============================================================================
+
+model MenuItem {
+  id String @id @default(cuid())
+
+  parentId String?
+  parent   MenuItem?  @relation("MenuTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children MenuItem[] @relation("MenuTree")
+
+  location MenuLocation @default(MAIN)
+  href     String
+  isExternal Boolean    @default(false)
+  order    Int          @default(0)
+
+  /// Видимость отдельно по каждому языку: раздел может быть готов
+  /// на русском и ещё не переведён на английский.
+  visibleLocales Locale[] @default([kk, ru, en])
+
+  translations MenuItemTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([location, parentId, order])
+  @@map("menu_items")
+}
+
+model MenuItemTranslation {
+  id     String   @id @default(cuid())
+  itemId String
+  item   MenuItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  locale Locale
+  title  String
+
+  @@unique([itemId, locale])
+  @@map("menu_item_translations")
+}
+
+// =============================================================================
+//  Главная страница (п. 1 ТЗ)
+//
+//  Секции — записи в БД: их состав и порядок редактируются из админки,
+//  как того требует п. IV.
+// =============================================================================
+
+model HomeSection {
+  id      String          @id @default(cuid())
+  type    HomeSectionType
+  order   Int             @default(0)
+  isVisible Boolean       @default(true)
+
+  /// Только для type = hero. Постер обязателен, видео — нет:
+  /// LCP-элементом должно быть изображение, иначе целевые 80 баллов
+  /// PageSpeed на мобильных недостижимы (п. VIII ТЗ).
+  heroPosterId String?
+  heroPoster   Media?  @relation("HeroPoster", fields: [heroPosterId], references: [id], onDelete: SetNull)
+  heroVideoId  String?
+  heroVideo    Media?  @relation("HeroVideo", fields: [heroVideoId], references: [id], onDelete: SetNull)
+  /// Отдавать ли видео на мобильных. По умолчанию нет.
+  videoOnMobile Boolean @default(false)
+
+  href String?
+
+  translations HomeSectionTranslation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([order])
+  @@map("home_sections")
+}
+
+model HomeSectionTranslation {
+  id        String      @id @default(cuid())
+  sectionId String
+  section   HomeSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  locale    Locale
+
+  eyebrow  String?
+  title    String?
+  subtitle String?
+  blocks   Json    @default("[]")
+
+  primaryLabel   String?
+  primaryHref    String?
+  secondaryLabel String?
+  secondaryHref  String?
+
+  @@unique([sectionId, locale])
+  @@map("home_section_translations")
+}
+
+// =============================================================================
+//  Настройки сайта (п. 6 ТЗ)
+// =============================================================================
+
+/// Единственная запись. Ограничение на одну строку добавлено миграцией.
+model Settings {
+  id String @id @default("singleton")
+
+  phones  String[] @default([])
+  emails  String[] @default([])
+  lat     Float?
+  lng     Float?
+  /// [{ kind: "instagram", url: "..." }]
+  socials Json     @default("[]")
+
+  /// В п. 6 ТЗ форма обратной связи помечена «при необходимости».
+  feedbackEnabled Boolean @default(true)
+
+  /// Число новостей в ленте на главной. П. 1 ТЗ требует 3–5.
+  homeNewsCount Int @default(3)
+
+  translations SettingsTranslation[]
+
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+model SettingsTranslation {
+  id         String   @id @default(cuid())
+  settingsId String
+  settings   Settings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
+  locale     Locale
+
+  organizationName String
+  address          String
+  workingHours     String
+  footerText       String?
+
+  @@unique([settingsId, locale])
+  @@map("settings_translations")
+}
+
+// =============================================================================
+//  Форма обратной связи (п. 6 ТЗ)
+// =============================================================================
+
+model Feedback {
+  id      String  @id @default(cuid())
+  name    String
+  email   String
+  phone   String?
+  subject String?
+  message String
+
+  /// Факт согласия на обработку персональных данных и момент его дачи.
+  /// Хранится как доказательство по Закону РК «О персональных данных».
+  consentAt DateTime
+  ip        String?
+  userAgent String?
+
+  isProcessed Boolean   @default(false)
+  processedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@index([isProcessed])
+  @@map("feedback")
+}
+
+// =============================================================================
+//  Поисковый индекс (п. VI ТЗ)
+//
+//  Отдельная таблица вместо запросов по всем сущностям сразу: сквозной
+//  поиск иначе превращается в UNION из пяти таблиц с их переводами.
+//
+//  Колонка tsvector и GIN-индекс добавляются миграцией — Prisma
+//  не умеет описывать их декларативно. Для русского используется
+//  словарь 'russian', для казахского и английского — 'simple':
+//  стеммера казахского языка в PostgreSQL нет.
+// =============================================================================
+
+model SearchDocument {
+  id String @id @default(cuid())
+
+  /// news | page | document | vacancy | person
+  entity   String
+  entityId String
+  locale   Locale
+
+  title   String
+  /// Текстовое содержимое без разметки — источник для tsvector.
+  content String
+  /// Путь на сайте без языкового префикса.
+  href    String
+  date    DateTime?
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([entity, entityId, locale])
+  @@index([locale, entity])
+  @@map("search_documents")
+}

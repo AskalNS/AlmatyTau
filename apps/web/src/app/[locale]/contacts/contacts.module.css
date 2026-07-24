@@ -1,0 +1,53 @@
+.title {
+  font-size: 44px;
+  margin-bottom: 40px;
+}
+@media (max-width: 768px) {
+  .title {
+    font-size: 30px;
+  }
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 44px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+.card {
+  border: 1px solid var(--s-200);
+  border-radius: 8px;
+  padding: 26px;
+  margin-bottom: 20px;
+}
+.org {
+  font-size: 19px;
+  margin-bottom: 16px;
+}
+.details {
+  margin: 0;
+}
+.details > div {
+  display: flex;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--s-100);
+}
+.details dt {
+  width: 150px;
+  flex: none;
+  font-size: 14px;
+  color: var(--s-500);
+}
+.details dd {
+  margin: 0;
+  font-weight: 600;
+  font-size: 15px;
+}
+.details dd a {
+  display: block;
+}

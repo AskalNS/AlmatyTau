@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ATM — UX-прототипы (этап 1)</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  :root{
+    --ink:#1c1c1e; --mute:#6b6b70; --line:#c9c9cf; --bg:#f4f4f6;
+    --panel:#fff; --accent:#2f5d50; --note:#8a6d1f; --noteBg:#fdf6e3;
+  }
+  body{margin:0;font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);display:flex;min-height:100vh}
+
+  /* ---------- навигация по прототипу ---------- */
+  aside{width:250px;flex:none;background:#22252a;color:#d7d9de;padding:16px 0;overflow-y:auto;height:100vh;position:sticky;top:0}
+  aside h1{font-size:13px;margin:0 16px 4px;color:#fff;letter-spacing:.02em}
+  aside .sub{font-size:11px;color:#8c9098;margin:0 16px 16px}
+  aside .grp{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#71757d;margin:18px 16px 6px}
+  aside a{display:block;padding:6px 16px;color:#d7d9de;text-decoration:none;font-size:13px;border-left:3px solid transparent;cursor:pointer}
+  aside a:hover{background:#2b2f35}
+  aside a.on{background:#2b2f35;border-left-color:var(--accent);color:#fff}
+  aside a .u{display:block;font-size:10px;color:#71757d;font-family:ui-monospace,monospace}
+
+  /* ---------- рабочая область ---------- */
+  main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .bar{background:#fff;border-bottom:1px solid var(--line);padding:10px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:5;flex-wrap:wrap}
+  .bar .ttl{font-weight:600}
+  .bar .url{font-family:ui-monospace,monospace;font-size:12px;color:var(--mute);background:var(--bg);padding:2px 8px;border-radius:4px}
+  .bar .sp{flex:1}
+  .bar button{font:inherit;font-size:12px;padding:5px 12px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer}
+  .bar button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .stage{padding:24px;overflow-y:auto;flex:1}
+  .frame{background:var(--panel);border:1px solid var(--line);margin:0 auto;max-width:1180px;transition:max-width .2s}
+  body.mob .frame{max-width:390px}
+
+  /* ---------- примитивы каркаса ---------- */
+  .box{border:1px dashed var(--line);background:#fafafb;padding:14px;margin-bottom:12px}
+  .box .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);margin-bottom:8px}
+  .ph{background:repeating-linear-gradient(45deg,#ececed,#ececed 8px,#e4e4e6 8px,#e4e4e6 16px);
+      border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+      color:var(--mute);font-size:12px;text-align:center;padding:8px}
+  .tx{height:9px;background:#e2e2e5;border-radius:2px;margin:7px 0}
+  .tx.s{width:45%} .tx.m{width:72%} .tx.l{width:92%}
+  .h{height:16px;background:#d3d3d8;border-radius:2px;width:55%;margin:0 0 12px}
+  .btn{display:inline-block;border:1px solid var(--ink);padding:7px 16px;font-size:12px;border-radius:5px;margin-right:8px}
+  .btn.f{background:var(--ink);color:#fff}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .row>*{flex:1;min-width:0}
+  .g2,.g3,.g4{display:grid;gap:12px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  body.mob .g2,body.mob .g3,body.mob .g4{grid-template-columns:1fr}
+  body.mob .row{flex-direction:column}
+  .note{background:var(--noteBg);border-left:3px solid var(--note);padding:9px 12px;font-size:12px;color:#6b5512;margin:12px 0}
+  .note b{color:#4a3a0a}
+  .tag{display:inline-block;font-size:10px;background:#e8ecea;color:var(--accent);padding:2px 8px;border-radius:10px;margin-right:5px}
+
+  /* ---------- шапка / подвал каркаса ---------- */
+  .hd{border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .hd .logo{font-weight:700;font-size:15px;letter-spacing:-.01em;white-space:nowrap}
+  .hd nav{display:flex;gap:14px;font-size:12px;color:var(--mute);flex-wrap:wrap}
+  .hd nav span.cur{color:var(--ink);font-weight:600;border-bottom:2px solid var(--accent)}
+  .hd .tools{margin-left:auto;display:flex;gap:8px;align-items:center;font-size:11px;color:var(--mute)}
+  .hd .tools .ic{border:1px solid var(--line);border-radius:4px;padding:3px 7px}
+  body.mob .hd nav{display:none}
+  body.mob .hd .burger{display:block !important}
+  .hd .burger{display:none;border:1px solid var(--line);border-radius:4px;padding:3px 8px;margin-left:auto}
+  .crumb{padding:10px 20px;font-size:11px;color:var(--mute);border-bottom:1px solid #ededf0}
+  .bd{padding:20px}
+  .ft{border-top:1px solid var(--line);padding:18px 20px;background:#fafafb}
+  .hero{height:280px}
+  body.mob .hero{height:180px}
+</style>
+</head>
+<body>
+
+<aside>
+  <h1>Прототипы UX</h1>
+  <div class="sub">ТОО «Almaty Tau Management»<br>Этап 1 приёмки · п. XIV ТЗ</div>
+  <div id="menu"></div>
+</aside>
+
+<main>
+  <div class="bar">
+    <span class="ttl" id="t">—</span>
+    <span class="url" id="u">—</span>
+    <span class="sp"></span>
+    <button id="bD" class="on">Desktop</button>
+    <button id="bM">Mobile</button>
+  </div>
+  <div class="stage"><div class="frame" id="frame"></div></div>
+</main>
+
+<script>
+/* ---------------------------------------------------------------
+   Каркасы страниц. Дизайн намеренно отсутствует — это этап 1 (UX).
+   Визуальное оформление разрабатывается на этапе 2 (UI).
+----------------------------------------------------------------*/
+
+const NAV = ['Главная','Almaty Tau Management','Проект АГК','Корп. информация','Медиацентр','Контакты'];
+
+function head(cur){
+  return `<div class="hd">
+    <div class="logo">◭ ALMATY TAU MANAGEMENT</div>
+    <nav>${NAV.map(n=>`<span class="${n===cur?'cur':''}">${n}${['Almaty Tau Management','Корп. информация','Медиацентр'].includes(n)?' ▾':''}</span>`).join('')}</nav>
+    <div class="burger">☰</div>
+    <div class="tools">
+      <span class="ic">⌕ поиск</span>
+      <span class="ic">KK · <b>RU</b> · EN</span>
+      <span class="ic">◐ слабовидящим</span>
+    </div>
+  </div>`;
+}
+function crumb(p){ return p ? `<div class="crumb">Главная / ${p}</div>` : ''; }
+function foot(){
+  return `<div class="ft">
+    <div class="g4">
+      <div><div class="tx s"></div><div class="tx m"></div><div class="tx m"></div><div class="tx s"></div></div>
+      <div><div class="tx s"></div><div class="tx m"></div><div class="tx m"></div><div class="tx s"></div></div>
+      <div><div class="tx s"></div><div class="tx m"></div><div class="tx m"></div></div>
+      <div class="box" style="margin:0"><div class="lbl">Контакты</div>
+        <div class="tx l"></div><div class="tx m"></div><div class="tx s"></div></div>
+    </div>
+    <div style="margin-top:14px;font-size:11px;color:var(--mute)">
+      © ATM · Политика конфиденциальности · Карта сайта · KK / RU / EN
+    </div>
+  </div>`;
+}
+function page(cur, path, body){ return head(cur)+crumb(path)+`<div class="bd">${body}</div>`+foot(); }
+
+/* ------------------------------ экраны ------------------------------ */
+const S = {};
+
+S.home = { t:'Главная', u:'/ru', nav:'Главная', grp:'Публичный сайт', html:()=>page('Главная','',`
+  <div class="box"><div class="lbl">Секция 1 · Герой (п. 1 ТЗ)</div>
+    <div class="ph hero">Видео / анимированный баннер<br>горный ландшафт, канатные дороги</div>
+    <div style="margin-top:12px"><div class="h" style="width:70%"></div><div class="tx m"></div>
+      <div style="margin-top:12px"><span class="btn f">О проекте</span><span class="btn">Новости</span></div></div>
+    <div class="note"><b>Риск PageSpeed.</b> Видео — главная угроза LCP на мобильных (п. VIII: Mobile ≥ 80).
+      Решение: LCP-элемент — постер-изображение, видео грузится после <code>load</code>;
+      на мобильных вместо видео статичный кадр. Требует подтверждения Заказчика.</div>
+  </div>
+
+  <div class="box"><div class="lbl">Секция 2 · О проекте «Алматинский горный кластер»</div>
+    <div class="row"><div><div class="h"></div><div class="tx l"></div><div class="tx l"></div><div class="tx m"></div>
+      <div style="margin-top:10px"><span class="btn">Подробнее о проекте →</span></div></div>
+      <div class="ph" style="height:170px">Изображение / инфографика</div></div>
+  </div>
+
+  <div class="box"><div class="lbl">Секция 3 · Ключевые цифры проекта</div>
+    <div class="g4">${'<div class="ph" style="height:88px">00 000<br><small>показатель</small></div>'.repeat(4)}</div>
+  </div>
+
+  <div class="box"><div class="lbl">Секция 4 · Территория / интерактивная карта</div>
+    <div class="ph" style="height:230px">Интерактивная карта территории АГК<br><small>задел под цифровой двойник (п. VI)</small></div>
+  </div>
+
+  <div class="box"><div class="lbl">Секция 5 · Последние новости (3–5 публикаций, п. 1 ТЗ)</div>
+    <div class="g3">${`<div><div class="ph" style="height:120px">фото</div><div class="tx s" style="margin-top:8px"></div><div class="tx l"></div><div class="tx m"></div></div>`.repeat(3)}</div>
+    <div style="margin-top:12px"><span class="btn">Все новости →</span></div>
+  </div>
+
+  <div class="box"><div class="lbl">Секция 6 · Партнёры и госресурсы (модуль links)</div>
+    <div class="g4">${'<div class="ph" style="height:56px">логотип</div>'.repeat(4)}</div>
+  </div>
+
+  <div class="note"><b>Порядок и состав секций редактируются</b> из админки без разработчика —
+    п. IV ТЗ разрешает Заказчику менять структуру на любом этапе.</div>
+`)};
+
+S.company = { t:'Обзор раздела «Almaty Tau Management»', u:'/ru/company', nav:'Almaty Tau Management', html:()=>page('Almaty Tau Management','Almaty Tau Management',`
+  <div class="h" style="width:45%"></div><div class="tx l"></div><div class="tx m"></div>
+  <div class="box" style="margin-top:16px"><div class="lbl">Плитки подразделов</div>
+    <div class="g2">
+      <div class="ph" style="height:110px">О компании</div>
+      <div class="ph" style="height:110px">Правление</div>
+      <div class="ph" style="height:110px">Наблюдательный совет</div>
+      <div class="ph" style="height:110px">Организационная структура</div>
+    </div>
+  </div>
+  <div class="note"><b>Страница-хаб добавлена сверх буквы ТЗ.</b> П. IV требует, чтобы каждый пункт меню
+    имел уникальный URL. Родительский пункт с выпадающим списком без своей страницы недоступен
+    с клавиатуры и теряет уровень в SEO.</div>
+`)};
+
+S.about = { t:'О компании', u:'/ru/company/about', nav:'Almaty Tau Management', html:()=>page('Almaty Tau Management','Almaty Tau Management / О компании',`
+  <div class="h"></div>
+  <div class="box"><div class="lbl">Блок: текст</div><div class="tx l"></div><div class="tx l"></div><div class="tx m"></div></div>
+  <div class="box"><div class="lbl">Блок: изображение с подписью</div><div class="ph" style="height:200px">фото / инфографика</div></div>
+  <div class="box"><div class="lbl">Блок: показатели</div><div class="g3">${'<div class="ph" style="height:80px">00</div>'.repeat(3)}</div></div>
+  <div class="box"><div class="lbl">Блок: видео</div><div class="ph" style="height:180px">видеоматериал</div></div>
+  <div class="note"><b>Блочная страница.</b> Тело — массив блоков в БД
+    (<code>text · heading · image · gallery · video · file · quote · stats · map · accordion</code>).
+    Редактор добавляет, удаляет и переставляет блоки сам. Вёрстка под конкретный текст не пишется.</div>
+`)};
+
+S.board = { t:'Правление', u:'/ru/company/board', nav:'Almaty Tau Management', html:()=>page('Almaty Tau Management','Almaty Tau Management / Правление',`
+  <div class="h" style="width:30%"></div>
+  <div class="g3">${`<div class="box"><div class="ph" style="height:180px">фотопортрет<br><small>4:5</small></div>
+    <div class="tx m" style="margin-top:10px;height:11px"></div><div class="tx s"></div>
+    <div style="margin-top:8px"><span class="btn" style="font-size:11px;padding:4px 10px">Биография →</span></div></div>`.repeat(6)}</div>
+  <div class="note"><b>Требует решения:</b> биография раскрывается на отдельной странице или прямо в карточке?
+    Зависит от объёма текста — вопрос к Заказчику (см. 01-SITEMAP §6.7).</div>
+`)};
+
+S.person = { t:'Карточка персоны', u:'/ru/company/board/[slug]', nav:'Almaty Tau Management', html:()=>page('Almaty Tau Management','… / Правление / Персона',`
+  <div class="row">
+    <div style="flex:0 0 34%"><div class="ph" style="height:280px">фотопортрет</div></div>
+    <div style="flex:2">
+      <div class="h" style="width:65%"></div>
+      <div class="tag">должность</div>
+      <div class="tx l" style="margin-top:14px"></div><div class="tx l"></div><div class="tx l"></div><div class="tx m"></div>
+      <div class="box" style="margin-top:16px"><div class="lbl">Образование / карьера</div>
+        <div class="tx m"></div><div class="tx l"></div></div>
+    </div>
+  </div>
+`)};
+
+S.structure = { t:'Организационная структура', u:'/ru/company/structure', nav:'Almaty Tau Management', html:()=>page('Almaty Tau Management','… / Организационная структура',`
+  <div class="h" style="width:42%"></div>
+  <div class="box"><div class="lbl">Блок: схема (изображение или SVG)</div>
+    <div class="ph" style="height:300px">Схема оргструктуры<br><small>масштабирование, скачивание PDF</small></div></div>
+  <div class="box"><div class="lbl">Блок: описание подразделений (аккордеон)</div>
+    ${'<div style="border-bottom:1px solid var(--line);padding:9px 0"><div class="tx m" style="height:11px"></div></div>'.repeat(4)}</div>
+  <div class="note"><b>Доступность (п. VI).</b> Схема картинкой недоступна для скринридера.
+    Обязателен текстовый аналог в аккордеоне ниже + осмысленный <code>alt</code>.</div>
+`)};
+
+S.project = { t:'Проект «Алматинский горный кластер»', u:'/ru/project', nav:'Проект АГК', html:()=>page('Проект АГК','Проект АГК',`
+  <div class="ph" style="height:230px">Обложка раздела</div>
+  <div class="box" style="margin-top:14px"><div class="lbl">Цели и задачи</div><div class="tx l"></div><div class="tx l"></div><div class="tx m"></div></div>
+  <div class="box"><div class="lbl">Ключевые показатели проекта</div><div class="g4">${'<div class="ph" style="height:84px">00 000</div>'.repeat(4)}</div></div>
+  <div class="box"><div class="lbl">Этапы реализации (таймлайн)</div>
+    <div class="ph" style="height:120px">2025 → 2027 → 2030<br><small>горизонтальный таймлайн</small></div></div>
+  <div class="box"><div class="lbl">Направления развития</div><div class="g3">${'<div class="ph" style="height:130px">направление</div>'.repeat(3)}</div></div>
+  <div class="box"><div class="lbl">Туристическая инфраструктура · интерактивная карта</div>
+    <div class="ph" style="height:260px">Карта объектов</div></div>
+  <div class="box"><div class="lbl">Инвестиционные инициативы</div><div class="tx l"></div><div class="tx m"></div>
+    <div style="margin-top:10px"><span class="btn">Скачать презентацию (PDF)</span></div></div>
+  <div class="note"><b>Самый объёмный раздел ТЗ (п. 3).</b> Собирается из блоков — состав и порядок
+    Заказчик меняет сам по мере наполнения проекта.</div>
+`)};
+
+S.corporate = { t:'Обзор «Корпоративная информация»', u:'/ru/corporate', nav:'Корп. информация', html:()=>page('Корп. информация','Корпоративная информация',`
+  <div class="h" style="width:48%"></div>
+  <div class="g3">
+    <div class="ph" style="height:120px">Внутренние<br>нормативные документы</div>
+    <div class="ph" style="height:120px">Государственные<br>закупки</div>
+    <div class="ph" style="height:120px">Вакансии</div>
+  </div>
+`)};
+
+S.documents = { t:'Внутренние нормативные документы', u:'/ru/corporate/documents', nav:'Корп. информация', html:()=>page('Корп. информация','Корпоративная информация / Документы',`
+  <div class="h" style="width:52%"></div>
+  <div class="row" style="align-items:flex-start">
+    <div style="flex:0 0 220px"><div class="box"><div class="lbl">Категории (п. 4.1)</div>
+      ${'<div class="tx m" style="height:11px"></div>'.repeat(5)}</div></div>
+    <div style="flex:3">
+      <div class="box" style="display:flex;gap:10px;align-items:center">
+        <div class="ph" style="flex:1;height:34px">⌕ поиск по документам</div>
+        <div class="ph" style="width:130px;height:34px">сортировка</div>
+      </div>
+      ${`<div class="box" style="display:flex;gap:12px;align-items:center">
+        <div class="ph" style="width:40px;height:48px;flex:none">PDF</div>
+        <div style="flex:1"><div class="tx m" style="height:11px"></div><div class="tx s"></div></div>
+        <span class="btn" style="font-size:11px;padding:4px 10px">Скачать</span></div>`.repeat(5)}
+    </div>
+  </div>
+  <div class="note"><b>По п. 4.1:</b> размещение, хранение, обновление, скачивание + группировка по
+    категориям и поиск. Версионность файла — новая версия не ломает уже опубликованные ссылки.</div>
+`)};
+
+S.procurement = { t:'Государственные закупки', u:'/ru/corporate/procurement', nav:'Корп. информация', html:()=>page('Корп. информация','Корпоративная информация / Госзакупки',`
+  <div class="h" style="width:40%"></div>
+  <div class="box"><div class="lbl">Текстовый блок</div><div class="tx l"></div><div class="tx m"></div></div>
+  <div class="box"><div class="lbl">Ссылки на официальные ресурсы (модуль links)</div>
+    ${'<div style="border:1px solid var(--line);padding:10px;margin-bottom:8px;display:flex;gap:10px"><div class="ph" style="width:34px;height:34px;flex:none">↗</div><div style="flex:1"><div class="tx m" style="height:11px"></div><div class="tx s"></div></div></div>'.repeat(3)}</div>
+  <div class="note"><b>Требует решения:</b> только ссылки на goszakup.gov.kz или ещё и собственный
+    реестр объявлений с админкой? Влияет на объём модуля (см. 01-SITEMAP §6.5).</div>
+`)};
+
+S.vacancies = { t:'Вакансии', u:'/ru/corporate/vacancies', nav:'Корп. информация', html:()=>page('Корп. информация','Корпоративная информация / Вакансии',`
+  <div class="h" style="width:25%"></div>
+  ${`<div class="box"><div style="display:flex;gap:12px;align-items:flex-start">
+    <div style="flex:1"><div class="tx m" style="height:12px"></div>
+      <div style="margin-top:8px"><span class="tag">подразделение</span><span class="tag">приём до 00.00.0000</span></div>
+      <div class="tx l" style="margin-top:8px"></div></div>
+    <span class="btn" style="flex:none">Подробнее</span></div></div>`.repeat(3)}
+  <div class="box" style="text-align:center;color:var(--mute);font-size:12px">
+    Пустое состояние: «В настоящее время открытых вакансий нет»</div>
+`)};
+
+S.vacancy = { t:'Вакансия', u:'/ru/corporate/vacancies/[slug]', nav:'Корп. информация', html:()=>page('Корп. информация','… / Вакансии / Вакансия',`
+  <div class="h" style="width:58%"></div>
+  <div class="row"><span class="tag">подразделение</span><span class="tag">срок приёма</span><span class="tag">условия</span></div>
+  <div class="box" style="margin-top:14px"><div class="lbl">Требования к кандидату</div><div class="tx l"></div><div class="tx l"></div><div class="tx m"></div></div>
+  <div class="box"><div class="lbl">Условия работы</div><div class="tx l"></div><div class="tx m"></div></div>
+  <div class="box"><div class="lbl">Как откликнуться</div><div class="tx m"></div>
+    <div style="margin-top:10px"><span class="btn f">Отправить резюме</span></div>
+    <div class="note" style="margin-bottom:0"><b>Персональные данные.</b> Если приём резюме идёт через сайт,
+      обязательны согласие на обработку ПД и срок хранения — Закон РК «О персональных данных» (п. I ТЗ).</div></div>
+`)};
+
+S.media = { t:'Обзор «Медиацентр»', u:'/ru/media', nav:'Медиацентр', html:()=>page('Медиацентр','Медиацентр',`
+  <div class="h" style="width:30%"></div>
+  <div class="g2"><div class="ph" style="height:140px">Новости</div><div class="ph" style="height:140px">Медиагалерея</div></div>
+`)};
+
+S.news = { t:'Новости', u:'/ru/media/news', nav:'Медиацентр', html:()=>page('Медиацентр','Медиацентр / Новости',`
+  <div class="h" style="width:22%"></div>
+  <div class="box" style="display:flex;gap:10px;align-items:center">
+    <div class="ph" style="flex:1;height:34px">⌕ поиск по новостям</div>
+    <div class="ph" style="width:120px;height:34px">год / архив</div>
+    <div class="ph" style="width:120px;height:34px">по дате ↓</div>
+  </div>
+  <div class="g3">${`<div class="box"><div class="ph" style="height:140px">фото 16:9</div>
+    <div class="tx s" style="margin-top:8px"></div>
+    <div class="tx l" style="height:11px"></div><div class="tx m"></div></div>`.repeat(6)}</div>
+  <div style="text-align:center;margin-top:14px"><span class="btn">Показать ещё</span></div>
+  <div class="note"><b>По п. 5.1:</b> архив, сортировка по дате публикации, поиск.
+    Пагинация — «показать ещё» + постраничная навигация внизу, чтобы страницы индексировались.</div>
+`)};
+
+S.newsItem = { t:'Новость', u:'/ru/media/news/[slug]', nav:'Медиацентр', html:()=>page('Медиацентр','Медиацентр / Новости / Публикация',`
+  <div style="max-width:760px;margin:0 auto">
+    <div class="tx s"></div>
+    <div class="h" style="width:88%;height:22px"></div>
+    <div class="ph" style="height:300px;margin:14px 0">обложка</div>
+    <div class="tx l"></div><div class="tx l"></div><div class="tx m"></div>
+    <div class="box"><div class="lbl">Блок в теле новости: галерея</div><div class="g3">${'<div class="ph" style="height:80px">фото</div>'.repeat(3)}</div></div>
+    <div class="tx l"></div><div class="tx m"></div>
+    <div class="box"><div class="lbl">Поделиться / скачать фото в высоком разрешении</div>
+      <span class="btn" style="font-size:11px;padding:4px 10px">↗ поделиться</span>
+      <span class="btn" style="font-size:11px;padding:4px 10px">⤓ фото</span></div>
+  </div>
+  <div class="box" style="margin-top:20px"><div class="lbl">Похожие новости</div>
+    <div class="g3">${'<div class="ph" style="height:100px">новость</div>'.repeat(3)}</div></div>
+  <div class="note"><b>Сценарий журналиста.</b> Дата, авторство, кнопка скачивания фото в исходном
+    качестве и контакт пресс-службы — иначе материалы уходят в СМИ в виде скриншотов.</div>
+`)};
+
+S.gallery = { t:'Медиагалерея', u:'/ru/media/gallery', nav:'Медиацентр', html:()=>page('Медиацентр','Медиацентр / Медиагалерея',`
+  <div class="h" style="width:28%"></div>
+  <div class="box" style="display:flex;gap:10px">
+    <div class="ph" style="width:110px;height:32px">все</div>
+    <div class="ph" style="width:110px;height:32px">фото</div>
+    <div class="ph" style="width:110px;height:32px">видео</div>
+  </div>
+  <div class="g3">${`<div><div class="ph" style="height:150px">обложка альбома</div>
+    <div class="tx m" style="margin-top:8px;height:11px"></div><div class="tx s"></div></div>`.repeat(6)}</div>
+`)};
+
+S.album = { t:'Альбом', u:'/ru/media/gallery/[slug]', nav:'Медиацентр', html:()=>page('Медиацентр','… / Медиагалерея / Альбом',`
+  <div class="h" style="width:45%"></div>
+  <div class="tx s"></div><div class="tx m"></div>
+  <div class="g4" style="margin-top:14px">${'<div class="ph" style="height:110px">медиафайл</div>'.repeat(8)}</div>
+  <div class="note"><b>По п. 5.2</b> у каждого файла: наименование, описание, дата создания, источник.
+    Просмотр — лайтбокс с навигацией стрелками и закрытием по Esc (доступность, п. VI).</div>
+`)};
+
+S.contacts = { t:'Контакты', u:'/ru/contacts', nav:'Контакты', html:()=>page('Контакты','Контакты',`
+  <div class="h" style="width:22%"></div>
+  <div class="row">
+    <div><div class="box"><div class="lbl">Реквизиты и связь</div>
+      <div class="tx m"></div><div class="tx l"></div><div class="tx m"></div><div class="tx s"></div>
+      <div style="margin-top:10px" class="tag">г. Алматы, ул. Байзакова 303, 2 этаж</div></div>
+      <div class="box"><div class="lbl">Форма обратной связи</div>
+        ${'<div class="ph" style="height:32px;margin-bottom:8px">поле</div>'.repeat(3)}
+        <div class="ph" style="height:70px;margin-bottom:8px">сообщение</div>
+        <div style="font-size:11px;color:var(--mute);margin-bottom:8px">☐ согласие на обработку персональных данных</div>
+        <span class="btn f">Отправить</span></div></div>
+    <div><div class="ph" style="height:430px">Интерактивная карта<br><small>2GIS / Яндекс</small></div></div>
+  </div>
+  <div class="note"><b>Два открытых вопроса.</b> 1) Форма обратной связи в п. 6 ТЗ помечена
+    «при необходимости» — нужны получатель, состав полей, текст согласия.
+    2) Картографический сервис: в РК 2GIS и Яндекс работают стабильнее Google.</div>
+`)};
+
+S.search = { t:'Результаты поиска', u:'/ru/search?q=', nav:'', html:()=>page('','Поиск',`
+  <div class="ph" style="height:42px">⌕ поисковый запрос</div>
+  <div style="font-size:12px;color:var(--mute);margin:12px 0">Найдено N результатов · всё · новости · документы · страницы</div>
+  ${`<div class="box"><span class="tag">раздел</span><div class="tx m" style="height:11px;margin-top:8px"></div><div class="tx l"></div></div>`.repeat(4)}
+  <div class="note"><b>Сквозной поиск (п. VI)</b> по страницам, новостям и документам.
+    PostgreSQL full-text с учётом трёх языков — отдельный поисковый движок избыточен.</div>
+`)};
+
+S.a11y = { t:'Версия для слабовидящих', u:'любая страница + режим', nav:'Главная', grp:'Режимы', html:()=>`
+  <div style="background:#000;color:#ff0;font-size:19px;line-height:1.7">
+    <div style="border-bottom:2px solid #ff0;padding:16px 20px;display:flex;gap:18px;flex-wrap:wrap;align-items:center">
+      <b>ALMATY TAU MANAGEMENT</b>
+      <span style="margin-left:auto;border:2px solid #ff0;padding:4px 10px">А- А А+</span>
+      <span style="border:2px solid #ff0;padding:4px 10px">Ч/Б · Ч/Ж · С/Г</span>
+      <span style="border:2px solid #ff0;padding:4px 10px">Изобр.: выкл</span>
+      <span style="border:2px solid #ff0;padding:4px 10px">Обычная версия</span>
+    </div>
+    <div style="padding:20px">
+      <div style="border-bottom:2px solid #ff0;padding-bottom:10px;margin-bottom:16px">Главная / Новости</div>
+      <h2 style="margin:0 0 14px">Заголовок публикации</h2>
+      <p style="margin:0 0 12px">Текст публикации увеличенным кеглем с высоким контрастом. Межстрочный интервал увеличен, изображения заменены текстовыми описаниями из атрибута alt.</p>
+      <p style="border:2px dashed #ff0;padding:12px;margin:0">[Изображение: описание из поля alt, обязательного при загрузке]</p>
+    </div>
+  </div>
+  <div style="padding:20px;background:#fff">
+    <div class="note" style="margin:0"><b>П. VI ТЗ, обязательно по закону.</b> Это режим самого сайта,
+      а не сторонний виджет: настройка хранится в cookie и применяется на сервере, поэтому
+      страница не мигает при загрузке. Три цветовые схемы, три размера шрифта, отключение изображений.
+      Поле <code>alt</code> сделано обязательным в админке — без него изображение не сохранится.</div>
+  </div>`
+};
+
+S.notfound = { t:'404', u:'/ru/404', nav:'', grp:'Служебные', html:()=>page('','',`
+  <div style="text-align:center;padding:50px 20px">
+    <div class="h" style="width:130px;margin:0 auto 16px;height:30px"></div>
+    <div class="tx m" style="margin:0 auto 6px"></div>
+    <div class="tx s" style="margin:0 auto 20px"></div>
+    <span class="btn f">На главную</span><span class="btn">Поиск по сайту</span>
+  </div>`)};
+
+/* --------- сценарии редактора (админка) --------- */
+S.adminNews = { t:'Админка · редактор новости', u:'admin. / news / edit', grp:'Админка', html:()=>`
+  <div style="display:flex;min-height:600px">
+    <div style="width:190px;background:#22252a;color:#d7d9de;padding:14px 0;font-size:12px;flex:none">
+      <div style="padding:0 14px 12px;font-weight:700;color:#fff">ATM · Админка</div>
+      ${['Главная страница','Страницы','Новости','Медиагалерея','Документы','Вакансии','Персоны','Ссылки','Меню','Контакты','—','Пользователи','Журнал действий','Настройки']
+        .map(x=>x==='—'?'<div style="border-top:1px solid #3a3e45;margin:10px 0"></div>'
+        :`<div style="padding:6px 14px;${x==='Новости'?'background:#2b2f35;border-left:3px solid var(--accent);color:#fff':''}">${x}</div>`).join('')}
+      <div style="padding:10px 14px;color:#71757d;font-size:10px;margin-top:10px">
+        Разделы «Пользователи», «Журнал», «Настройки»<br>видны только Администратору (п. V)</div>
+    </div>
+    <div style="flex:1;padding:18px;background:#fff">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px">
+        <b>Редактирование новости</b>
+        <span class="tag">черновик</span>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <span class="btn" style="font-size:11px;padding:5px 12px">Предпросмотр</span>
+          <span class="btn f" style="font-size:11px;padding:5px 12px">Опубликовать</span></div>
+      </div>
+      <div style="display:flex;gap:8px;border-bottom:2px solid var(--line);margin-bottom:14px">
+        <div style="padding:7px 14px;border-bottom:2px solid var(--accent);margin-bottom:-2px;font-weight:600">RU ✓</div>
+        <div style="padding:7px 14px;color:var(--mute)">KK ✓</div>
+        <div style="padding:7px 14px;color:#b04a3a">EN — не переведено</div>
+      </div>
+      <div class="row" style="align-items:flex-start">
+        <div style="flex:2">
+          <div class="box"><div class="lbl">Заголовок · RU</div><div class="ph" style="height:34px"></div></div>
+          <div class="box"><div class="lbl">Обложка</div><div class="ph" style="height:110px">перетащите файл<br><small>alt обязателен</small></div></div>
+          <div class="box"><div class="lbl">Блочный редактор тела</div>
+            ${['текст','изображение','галерея'].map(b=>`<div style="border:1px solid var(--line);padding:9px;margin-bottom:7px;display:flex;gap:8px;align-items:center">
+              <span style="color:var(--mute)">⋮⋮</span><span class="tag">${b}</span><div class="tx m" style="flex:1;height:9px;margin:0"></div>
+              <span style="color:var(--mute);font-size:11px">✎ ✕</span></div>`).join('')}
+            <div class="ph" style="height:34px">+ добавить блок</div></div>
+        </div>
+        <div style="flex:1">
+          <div class="box"><div class="lbl">Публикация</div><div class="ph" style="height:30px;margin-bottom:7px">дата</div>
+            <div class="ph" style="height:30px">статус</div></div>
+          <div class="box"><div class="lbl">SEO · RU</div><div class="ph" style="height:30px;margin-bottom:7px">Title</div>
+            <div class="ph" style="height:52px">Description</div></div>
+        </div>
+      </div>
+      <div class="note"><b>Ключевой сценарий редактора.</b> Индикаторы KK/RU/EN показывают статус перевода —
+        языковая версия не публикуется, пока не переведена (п. III: независимое редактирование).
+        Каждое действие пишется в журнал (п. X.IV).</div>
+    </div>
+  </div>`};
+
+S.adminMenu = { t:'Админка · структура меню', u:'admin. / menu', grp:'Админка', html:()=>`
+  <div style="padding:20px;background:#fff">
+    <b>Структура меню сайта</b>
+    <div class="box" style="margin-top:14px">
+      ${[['Главная',0],['Almaty Tau Management',0],['О компании',1],['Правление',1],['Наблюдательный совет',1],
+         ['Организационная структура',1],['Проект АГК',0],['Корпоративная информация',0],['Внутренние документы',1],
+         ['Государственные закупки',1],['Вакансии',1],['Медиацентр',0],['Новости',1],['Медиагалерея',1],['Контакты',0]]
+        .map(([n,d])=>`<div style="border:1px solid var(--line);padding:8px 10px;margin-bottom:6px;margin-left:${d*26}px;display:flex;gap:9px;align-items:center;background:${d?'#fafafb':'#fff'}">
+          <span style="color:var(--mute)">⋮⋮</span><span style="flex:1">${n}</span>
+          <span class="tag">KK RU EN</span><span style="color:var(--mute);font-size:11px">👁 ✎</span></div>`).join('')}
+      <div class="ph" style="height:34px">+ добавить пункт</div>
+    </div>
+    <div class="note"><b>Меню хранится в БД, а не в коде.</b> П. IV ТЗ: структура и наименования разделов
+      могут меняться Заказчиком на любом этапе. Переименование или перестановка пункта не требует релиза.</div>
+  </div>`};
+
+/* ------------------------------ роутер ------------------------------ */
+const ORDER = ['home','company','about','board','person','structure','project','corporate','documents',
+  'procurement','vacancies','vacancy','media','news','newsItem','gallery','album','contacts','search',
+  'a11y','notfound','adminNews','adminMenu'];
+
+const menu=document.getElementById('menu'); let last=null;
+ORDER.forEach(k=>{
+  const s=S[k];
+  if(s.grp && s.grp!==last){ last=s.grp;
+    const g=document.createElement('div'); g.className='grp'; g.textContent=s.grp; menu.appendChild(g); }
+  const a=document.createElement('a'); a.dataset.k=k;
+  a.innerHTML=`${s.t}<span class="u">${s.u}</span>`;
+  a.onclick=()=>show(k); menu.appendChild(a);
+});
+
+function show(k){
+  const s=S[k];
+  document.getElementById('frame').innerHTML=s.html();
+  document.getElementById('t').textContent=s.t;
+  document.getElementById('u').textContent=s.u;
+  [...menu.querySelectorAll('a')].forEach(a=>a.classList.toggle('on',a.dataset.k===k));
+  document.querySelector('.stage').scrollTop=0;
+  location.hash=k;
+}
+document.getElementById('bD').onclick=()=>{document.body.classList.remove('mob');
+  document.getElementById('bD').classList.add('on');document.getElementById('bM').classList.remove('on')};
+document.getElementById('bM').onclick=()=>{document.body.classList.add('mob');
+  document.getElementById('bM').classList.add('on');document.getElementById('bD').classList.remove('on')};
+
+show(ORDER.includes(location.hash.slice(1))?location.hash.slice(1):'home');
+</script>
+</body>
+</html>

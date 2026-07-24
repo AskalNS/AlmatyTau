@@ -1,0 +1,35 @@
+{
+  "name": "@atm/contracts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Общие типы и Zod-схемы API. Единый источник правды для бэкенда, сайта и админки.",
+  "//": "Двойная сборка: CJS для бэкенда (NestJS require), ESM для сборщиков фронтендов (Next/Vite получают корректные именованные экспорты). Так каждый потребитель берёт подходящий формат.",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/cjs/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json && node scripts/finalize.cjs",
+    "dev": "tsc -p tsconfig.cjs.json --watch --preserveWatchOutput",
+    "typecheck": "tsc -p tsconfig.cjs.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

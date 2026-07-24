@@ -1,0 +1,145 @@
+.title {
+  font-size: 44px;
+  margin-bottom: 32px;
+}
+@media (max-width: 768px) {
+  .title {
+    font-size: 30px;
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--s-200);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: 0.18s;
+}
+.card:hover {
+  box-shadow: var(--sh-2);
+  transform: translateY(-3px);
+}
+.img {
+  display: block;
+  overflow: hidden;
+}
+.body {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.date {
+  font-size: 13px;
+  color: var(--s-500);
+  font-variant-numeric: tabular-nums;
+}
+.cardTitle {
+  font-size: 19px;
+  line-height: 1.35;
+}
+.cardTitle a {
+  color: inherit;
+}
+.cardTitle a:hover {
+  color: var(--green-700);
+  text-decoration: none;
+}
+.body p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--s-600);
+}
+
+.empty {
+  color: var(--s-500);
+  padding: 40px 0;
+}
+
+.pagination {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 44px;
+  flex-wrap: wrap;
+}
+.page,
+.pageOn {
+  min-width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--s-200);
+  border-radius: 6px;
+  color: var(--s-700);
+  font-variant-numeric: tabular-nums;
+}
+.page:hover {
+  border-color: var(--green-600);
+  text-decoration: none;
+}
+.pageOn {
+  background: var(--green-600);
+  color: #fff;
+  border-color: var(--green-600);
+}
+
+/* ---- детальная ---- */
+.breadcrumb {
+  font-size: 13px;
+  color: var(--s-500);
+  margin-bottom: 24px;
+}
+.article {
+  max-width: 760px;
+}
+.articleTitle {
+  font-size: 44px;
+  margin-bottom: 16px;
+}
+@media (max-width: 768px) {
+  .articleTitle {
+    font-size: 30px;
+  }
+}
+.meta {
+  display: flex;
+  gap: 18px;
+  font-size: 14px;
+  color: var(--s-500);
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--s-200);
+}
+.cover {
+  margin: 32px 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.articleBody {
+  max-width: 760px;
+  font-size: 17px;
+  line-height: 1.75;
+}
+.related {
+  margin-top: 64px;
+  padding-top: 40px;
+  border-top: 1px solid var(--s-200);
+}
+.relatedTitle {
+  font-size: 28px;
+  margin-bottom: 32px;
+}

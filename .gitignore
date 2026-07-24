@@ -1,0 +1,54 @@
+# зависимости
+node_modules/
+.pnpm-store/
+
+# сборка
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# окружение — в репозиторий попадает только .env.example
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Prisma
+apps/backend/prisma/*.db
+apps/backend/prisma/migrations/dev.db*
+
+# логи
+*.log
+npm-debug.log*
+pnpm-debug.log*
+logs/
+
+# тесты и покрытие
+coverage/
+.nyc_output/
+
+# редакторы и ОС
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# локальные данные контейнеров
+.docker-data/
+backups/
+
+# временные
+tmp/
+.cache/
+
+# Локальный оверрайд портов — не для боевого сервера
+docker-compose.override.yml
+
+# Исходные документы: ТЗ и материалы с персональными данными (даты рождения,
+# биографии). Контент публикуется на сайте курировано, но сырые файлы
+# в публичный репозиторий класть не следует (Закон РК «О персональных данных»).
+*.docx
