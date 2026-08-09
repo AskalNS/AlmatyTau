@@ -102,7 +102,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               )}
               {section.blocks.length > 0 && (
                 <div className={styles.sectionBody}>
-                  <BlockRenderer blocks={section.blocks} locale={loc} />
+                  <BlockRenderer blocks={section.blocks} locale={loc} mediaMap={home.media} />
                 </div>
               )}
               {section.href && (

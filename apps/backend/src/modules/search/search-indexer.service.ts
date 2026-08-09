@@ -48,6 +48,22 @@ export class SearchIndexerService {
             if (typeof i.html === 'string') parts.push(stripHtml(i.html));
             if (typeof i.text === 'string') parts.push(i.text);
             if (typeof i.label === 'string') parts.push(i.label);
+            // Зоны кластера: название, роль и перечень объектов.
+            if (typeof i.name === 'string') parts.push(i.name);
+            if (typeof i.role === 'string') parts.push(i.role);
+            if (Array.isArray(i.features)) {
+              parts.push(...i.features.filter((f): f is string => typeof f === 'string'));
+            }
+          }
+        }
+      }
+      // Организационная структура: подписи узлов.
+      if (Array.isArray(b.nodes)) {
+        for (const node of b.nodes) {
+          if (node && typeof node === 'object') {
+            const n = node as Record<string, unknown>;
+            if (typeof n.title === 'string') parts.push(n.title);
+            if (typeof n.subtitle === 'string') parts.push(n.subtitle);
           }
         }
       }

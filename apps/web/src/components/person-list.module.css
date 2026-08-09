@@ -1,49 +1,82 @@
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 28px;
+  grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+  gap: 20px;
 }
-@media (max-width: 900px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-@media (max-width: 560px) {
+@media (max-width: 520px) {
   .grid {
     grid-template-columns: 1fr;
   }
 }
 
 .card {
+  position: relative;
   border: 1px solid var(--s-200);
   border-radius: var(--r-card);
-  overflow: hidden;
   background: #fff;
-  display: flex;
-  flex-direction: column;
+  box-shadow: var(--sh-1);
+  overflow: hidden;
+  transition: box-shadow 0.18s;
 }
+.card:hover {
+  box-shadow: var(--sh-2);
+}
+/* Тонкая акцентная полоса слева заменяет «рамку вокруг всего»:
+   карточки перестают читаться как однородная серая масса. */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--green-600);
+}
+
+.head {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 18px;
+  padding: 18px 20px 18px 22px;
+  align-items: start;
+}
+@media (max-width: 400px) {
+  .head {
+    grid-template-columns: 110px minmax(0, 1fr);
+    gap: 14px;
+  }
+}
+
 .photo {
+  border-radius: 8px;
+  overflow: hidden;
   background: var(--green-50);
+  line-height: 0;
 }
 .photo img {
   width: 100%;
   display: block;
 }
-.body {
-  padding: 20px;
+
+.info {
+  min-width: 0;
+  padding-top: 2px;
 }
 .name {
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.3;
-  margin-bottom: 6px;
+  margin: 0 0 6px;
 }
 .position {
-  font-size: 14px;
+  font-size: 13.5px;
+  line-height: 1.4;
   color: var(--gold-700);
   font-weight: 600;
   margin-bottom: 12px;
 }
+
 .toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font: inherit;
   font-size: 14px;
   font-weight: 600;
@@ -56,14 +89,27 @@
 .toggle:hover {
   text-decoration: underline;
 }
+.chevron {
+  display: inline-block;
+  font-size: 16px;
+  line-height: 1;
+  transition: transform 0.2s;
+}
+.chevron[data-open='on'] {
+  transform: rotate(180deg);
+}
+
 .bio {
-  margin-top: 12px;
-  font-size: 14.5px;
-  line-height: 1.6;
-  color: var(--s-700);
+  margin: 0 20px 20px 22px;
+  padding-top: 16px;
   border-top: 1px solid var(--s-100);
-  padding-top: 12px;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--s-700);
 }
 .bio p {
   margin: 0 0 10px;
+}
+.bio p:last-child {
+  margin-bottom: 0;
 }

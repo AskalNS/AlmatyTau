@@ -5,6 +5,7 @@ import {
   type PublicPage,
   type Locale,
   blocksSchema,
+  collectMediaIds,
 } from '@atm/contracts';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -118,13 +119,16 @@ export class PagesService {
       const tr = pickTranslation(row.translations, locale);
       if (!tr) return null;
 
+      const blocks = blocksSchema.parse(tr.blocks);
+
       const dto: PublicPage = {
         id: row.id,
         path: row.path,
         title: tr.title,
         lead: tr.lead,
         cover: row.cover ? this.media.toDto(row.cover) : null,
-        blocks: blocksSchema.parse(tr.blocks),
+        blocks,
+        media: await this.media.mapForBlocks(this.prisma.media, collectMediaIds(blocks)),
         seo: buildSeo(
           { title: tr.title, seoTitle: tr.seoTitle, seoDescription: tr.seoDescription, seoNoindex: tr.seoNoindex },
           availableLocales(row.translations),

@@ -55,6 +55,11 @@ export class SanitizerService {
             ...block,
             items: block.items.map((i) => ({ ...i, html: this.clean(i.html) })),
           };
+        case 'sections':
+          return {
+            ...block,
+            items: block.items.map((i) => ({ ...i, html: this.clean(i.html) })),
+          };
         default:
           return block;
       }

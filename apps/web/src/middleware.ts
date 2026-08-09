@@ -10,6 +10,9 @@ import { LOCALES, DEFAULT_LOCALE } from '@atm/contracts';
  */
 const PUBLIC_FILE = /\.(.*)$/;
 
+/** Год: настройки режима для слабовидящих не должны сбрасываться между визитами. */
+const A11Y_MAX_AGE = 60 * 60 * 24 * 365;
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -22,6 +25,24 @@ export function middleware(req: NextRequest) {
     PUBLIC_FILE.test(pathname)
   ) {
     return NextResponse.next();
+  }
+
+  // Включение и выключение режима для слабовидящих ссылкой ?a11y=on|off.
+  //
+  // Обрабатывается здесь, а не в браузере: режим нужен ровно тем, кто может
+  // работать без JavaScript и через вспомогательные технологии. Параметр
+  // снимается редиректом, чтобы он не тянулся в закладки и в поисковую выдачу.
+  const a11yParam = req.nextUrl.searchParams.get('a11y');
+  if (a11yParam === 'on' || a11yParam === 'off') {
+    const url = req.nextUrl.clone();
+    url.searchParams.delete('a11y');
+    const res = NextResponse.redirect(url);
+    if (a11yParam === 'on') {
+      res.cookies.set('a11y', 'on', { path: '/', maxAge: A11Y_MAX_AGE, sameSite: 'lax' });
+    } else {
+      res.cookies.set('a11y', '', { path: '/', maxAge: 0 });
+    }
+    return res;
   }
 
   const hasLocale = LOCALES.some(

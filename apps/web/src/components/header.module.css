@@ -19,11 +19,6 @@
 .spacer {
   flex: 1;
 }
-.topAddr {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .a11yLink,
 .searchLink {
   color: var(--s-600);
@@ -35,7 +30,6 @@
   text-decoration: none;
 }
 @media (max-width: 640px) {
-  .topAddr,
   .searchLink {
     display: none;
   }
@@ -66,21 +60,24 @@
 .logo:hover {
   text-decoration: none;
 }
+/* Словесная часть входит в утверждённый знак, поэтому рядом остаётся только
+   дескриптор проекта — через разделитель, чтобы не читался как часть логотипа. */
 .logoName {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 15px;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-}
-.logoName small {
-  display: block;
   font-family: var(--font-text);
   font-weight: 500;
   font-size: 10.5px;
+  line-height: 1.3;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--s-500);
+  max-width: 11ch;
+  padding-left: 11px;
+  border-left: 1px solid var(--s-200);
+}
+@media (max-width: 700px) {
+  .logoName {
+    display: none;
+  }
 }
 
 .nav {
@@ -116,6 +113,18 @@
   top: 100%;
   left: 0;
   min-width: 240px;
+}
+
+/* Списки у правого края раскрываются влево.
+   Скрытый выпадающий список остаётся в потоке прокрутки, поэтому «Медиацентр»
+   выходил за пределы окна и на КАЖДОЙ странице появлялась горизонтальная
+   прокрутка на ~20 px. Правое выравнивание последних пунктов это снимает. */
+.nav > *:nth-last-child(-n + 3) .dropdown {
+  left: auto;
+  right: 0;
+}
+
+.dropdown {
   background: #fff;
   border: 1px solid var(--s-200);
   border-radius: 8px;

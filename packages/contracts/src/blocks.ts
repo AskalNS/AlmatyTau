@@ -182,6 +182,265 @@ export const timelineBlockSchema = z.object({
     .max(30),
 });
 
+/* ------------------------------------------------- блоки, добавленные по
+   замечаниям Заказчика от 28.07.2026 --------------------------------------- */
+
+/**
+ * Иконки для карточек и вкладок.
+ *
+ * Не произвольная строка и не загружаемый файл: набор фиксирован, рисуется
+ * инлайновым SVG на сайте. Иначе редактор получает возможность вставить
+ * внешний ресурс, а вместе с ним — запрос к чужому домену на каждой странице.
+ */
+export const BLOCK_ICONS = [
+  'eco',        // лист — экология
+  'infra',      // здания — инфраструктура
+  'safety',     // щит — безопасность
+  'tourism',    // гора с флагом — туризм
+  'inclusion',  // люди — доступность и инклюзивность
+  'economy',    // рост — экономика
+  'transport',  // автобус — транспорт
+  'sport',      // медаль — спорт
+  'education',  // диплом — кадры
+  'cablecar',   // кабина канатной дороги
+  'health',     // сердце — здоровый образ жизни
+  'parking',    // знак парковки
+  'ticket',     // единый ски-пасс, тариф
+  'dot',        // нейтральный маркер
+] as const;
+export const blockIconSchema = z.enum(BLOCK_ICONS);
+export type BlockIcon = z.infer<typeof blockIconSchema>;
+
+export const BLOCK_ICON_LABELS: Record<BlockIcon, string> = {
+  eco: 'Экология',
+  infra: 'Инфраструктура',
+  safety: 'Безопасность',
+  tourism: 'Туризм',
+  inclusion: 'Доступность',
+  economy: 'Экономика',
+  transport: 'Транспорт',
+  sport: 'Спорт',
+  education: 'Кадры',
+  cablecar: 'Канатная дорога',
+  health: 'Здоровый образ жизни',
+  parking: 'Парковка',
+  ticket: 'Ски-пасс и тариф',
+  dot: 'Без иконки',
+};
+
+/**
+ * Карточки с иконками — «Ключевые задачи», «Направления деятельности».
+ *
+ * Заменяет список из однотипных прямоугольников: у карточки есть номер,
+ * иконка и заголовок, отделённый от пояснения. Замечание п. 5: девять
+ * формулировок сплошным текстом одного начертания читать невозможно,
+ * взгляду не за что зацепиться.
+ */
+export const cardsBlockSchema = z.object({
+  ...base,
+  type: z.literal('cards'),
+  /** Нумерация карточек: для перечня задач помогает удерживать место в списке. */
+  numbered: z.boolean().default(false),
+  columns: z.union([z.literal(2), z.literal(3), z.literal(4)]).default(3),
+  items: z
+    .array(
+      z.object({
+        icon: blockIconSchema.default('dot'),
+        title: z.string().trim().min(1).max(300),
+        text: z.string().trim().max(1200).optional().nullable(),
+      }),
+    )
+    .min(1)
+    .max(24),
+});
+
+/**
+ * Раздел с боковой навигацией по подразделам («Общественная ценность проекта»).
+ *
+ * Одна страница с якорями, а не подгрузка контента: так работает поиск по
+ * странице, ссылка на подраздел остаётся рабочей, а печать и режим для
+ * слабовидящих показывают материал целиком. Активный пункт подсвечивается
+ * заливкой при прокрутке — замечание к разделу: список не читался как меню.
+ */
+export const sectionsBlockSchema = z.object({
+  ...base,
+  type: z.literal('sections'),
+  items: z
+    .array(
+      z.object({
+        /** Якорь в адресе страницы. */
+        anchor: z.string().trim().regex(/^[a-z0-9-]+$/).max(60),
+        icon: blockIconSchema.default('dot'),
+        title: z.string().trim().min(1).max(200),
+        html: z.string().max(30_000),
+        /** Иллюстрация подраздела — «использовать визуал/картинки». */
+        mediaId: z.string().min(1).optional().nullable(),
+      }),
+    )
+    .min(2)
+    .max(20),
+});
+
+/**
+ * Сравнение «сейчас → после реализации».
+ *
+ * Отдельный тип, а не таблица: показатели «до» и «после» нужно сопоставлять
+ * взглядом, и разница должна читаться без вычислений.
+ */
+export const compareBlockSchema = z.object({
+  ...base,
+  type: z.literal('compare'),
+  fromLabel: z.string().trim().min(1).max(120),
+  toLabel: z.string().trim().min(1).max(120),
+  items: z
+    .array(
+      z.object({
+        label: z.string().trim().min(1).max(200),
+        from: z.string().trim().min(1).max(40),
+        to: z.string().trim().min(1).max(40),
+        suffix: z.string().trim().max(30).optional().nullable(),
+      }),
+    )
+    .min(1)
+    .max(12),
+});
+
+/**
+ * Зоны кластера: Шымбулак, Бутаковка, Кимасар, Пионер, Oi-Qaragai.
+ *
+ * Структура повторяет карточки зон из презентации «АГК_ОС»: специализация,
+ * три показателя, описание и перечень ключевых объектов.
+ */
+export const ZONE_KINDS = ['premium', 'mass', 'hybrid', 'sport', 'family'] as const;
+export const zoneKindSchema = z.enum(ZONE_KINDS);
+export type ZoneKind = z.infer<typeof zoneKindSchema>;
+
+export const zonesBlockSchema = z.object({
+  ...base,
+  type: z.literal('zones'),
+  items: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1).max(120),
+        kind: zoneKindSchema,
+        /** Роль зоны в системе — короткая строка рядом с бейджем. */
+        role: z.string().trim().min(1).max(200),
+        text: z.string().trim().max(1500),
+        stats: z
+          .array(
+            z.object({
+              value: z.string().trim().min(1).max(40),
+              label: z.string().trim().min(1).max(120),
+            }),
+          )
+          .max(4)
+          .default([]),
+        features: z.array(z.string().trim().min(1).max(300)).max(12).default([]),
+        /** План трасс зоны — крупным кадром в карточке. */
+        mediaId: z.string().min(1).optional().nullable(),
+        /**
+         * Визуализации объектов зоны — отдельными снимками, а не одной
+         * склейкой: у каждой зоны свой набор, и каждый кадр должен
+         * открываться целиком, а не жить миниатюрой внутри общей картинки.
+         */
+        shotIds: z.array(z.string().min(1)).max(12).default([]),
+      }),
+    )
+    .min(1)
+    .max(10),
+});
+
+/**
+ * Кольцевая диаграмма долей — распределение трасс по уровням сложности.
+ *
+ * Цвет сегмента — не произвольный HEX, а имя из набора: у горнолыжных трасс
+ * цветовая кодировка международная (зелёная, синяя, красная, чёрная),
+ * и подменять её произвольным цветом нельзя. Значения задаются в процентах,
+ * сумма проверяется на сервере не строго: части могут не покрывать 100 %
+ * (например, «прочее» не показывают).
+ */
+export const DONUT_COLORS = ['green', 'blue', 'red', 'black', 'gold', 'brand'] as const;
+export const donutColorSchema = z.enum(DONUT_COLORS);
+export type DonutColor = z.infer<typeof donutColorSchema>;
+
+export const donutBlockSchema = z.object({
+  ...base,
+  type: z.literal('donut'),
+  title: z.string().trim().max(200).optional().nullable(),
+  caption: z.string().trim().max(400).optional().nullable(),
+  segments: z
+    .array(
+      z.object({
+        label: z.string().trim().min(1).max(120),
+        /** Пояснение под подписью: «для начинающих», «для экспертов». */
+        note: z.string().trim().max(160).optional().nullable(),
+        percent: z.number().min(0).max(100),
+        color: donutColorSchema,
+      }),
+    )
+    .min(2)
+    .max(6),
+});
+
+/**
+ * Маршрут из шагов — «как добраться», порядок действий, этапы процесса.
+ *
+ * Отдельный тип, а не нумерованный список: у последовательности есть
+ * направление, и его показывают связкой между шагами, а не цифрами в начале
+ * строки. Используется для транспортной схемы кластера: посетитель должен
+ * увидеть цепочку «парковка → шаттл → канатная дорога» одним взглядом.
+ */
+export const flowBlockSchema = z.object({
+  ...base,
+  type: z.literal('flow'),
+  title: z.string().trim().max(200).optional().nullable(),
+  steps: z
+    .array(
+      z.object({
+        icon: blockIconSchema.default('dot'),
+        title: z.string().trim().min(1).max(120),
+        text: z.string().trim().max(400).optional().nullable(),
+        /** Короткая приписка: интервал, вместимость, стоимость. */
+        note: z.string().trim().max(80).optional().nullable(),
+      }),
+    )
+    .min(2)
+    .max(8),
+});
+
+/**
+ * Организационная структура (замечание п. 7 — схемы на странице не было).
+ *
+ * Плоский список узлов со ссылкой на родителя, а не вложенное дерево:
+ * такую структуру редактор правит по одному узлу и не рискует потерять
+ * ветку при перестановке. Уровень вложенности сайт считает сам.
+ */
+export const orgchartBlockSchema = z.object({
+  ...base,
+  type: z.literal('orgchart'),
+  nodes: z
+    .array(
+      z.object({
+        id: z.string().trim().min(1).max(60),
+        parentId: z.string().trim().max(60).optional().nullable(),
+        title: z.string().trim().min(1).max(200),
+        subtitle: z.string().trim().max(300).optional().nullable(),
+        /** Выделение уровня органов управления от исполнительного аппарата. */
+        accent: z.boolean().default(false),
+        /**
+         * Подчинённые узлы выстраиваются вертикальной колонкой, а не в ряд.
+         *
+         * Нужно для реальной схемы ТОО: заместители Председателя возглавляют
+         * колонки департаментов. В ряд девять департаментов не помещаются,
+         * а колонка повторяет утверждённую схему один в один.
+         */
+        stack: z.boolean().default(false),
+      }),
+    )
+    .min(1)
+    .max(60),
+});
+
 /**
  * Встраивание внешнего материала.
  *
@@ -214,6 +473,13 @@ export const blockSchema = z.discriminatedUnion('type', [
   ctaBlockSchema,
   timelineBlockSchema,
   embedBlockSchema,
+  cardsBlockSchema,
+  sectionsBlockSchema,
+  compareBlockSchema,
+  zonesBlockSchema,
+  orgchartBlockSchema,
+  flowBlockSchema,
+  donutBlockSchema,
 ]);
 
 export type Block = z.infer<typeof blockSchema>;
@@ -242,6 +508,13 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   cta: 'Призыв к действию',
   timeline: 'Таймлайн',
   embed: 'Внешний материал',
+  cards: 'Карточки с иконками',
+  sections: 'Подразделы с боковым меню',
+  compare: 'Сравнение «сейчас → станет»',
+  zones: 'Зоны кластера',
+  orgchart: 'Организационная структура',
+  flow: 'Последовательность шагов',
+  donut: 'Кольцевая диаграмма',
 };
 
 /** Порядок в меню «добавить блок»: сверху то, чем пользуются каждый день. */
@@ -253,6 +526,13 @@ export const BLOCK_ORDER: BlockType[] = [
   'video',
   'file',
   'stats',
+  'cards',
+  'compare',
+  'sections',
+  'zones',
+  'orgchart',
+  'flow',
+  'donut',
   'quote',
   'accordion',
   'timeline',
@@ -282,7 +562,7 @@ export function emptyBlock(type: BlockType, id: string): Block {
       return { id, type, items: [{ value: '', label: '', suffix: null }] };
     case 'map':
       // Координаты офиса из п. 6 ТЗ: г. Алматы, ул. Байзакова 303
-      return { id, type, provider: '2gis', lat: 43.2447, lng: 76.9128, zoom: 16, markers: [], height: 420 };
+      return { id, type, provider: '2gis', lat: 43.230043, lng: 76.914806, zoom: 16, markers: [], height: 420 };
     case 'accordion':
       return { id, type, items: [{ title: '', html: '' }] };
     case 'cta':
@@ -291,7 +571,108 @@ export function emptyBlock(type: BlockType, id: string): Block {
       return { id, type, items: [{ period: '', title: '', text: null, done: false }] };
     case 'embed':
       return { id, type, provider: 'youtube', externalId: '', title: null, ratio: '16:9' };
+    case 'cards':
+      return { id, type, numbered: false, columns: 3, items: [{ icon: 'dot', title: '', text: null }] };
+    case 'sections':
+      return {
+        id,
+        type,
+        items: [
+          { anchor: 'razdel-1', icon: 'dot', title: '', html: '', mediaId: null },
+          { anchor: 'razdel-2', icon: 'dot', title: '', html: '', mediaId: null },
+        ],
+      };
+    case 'compare':
+      return {
+        id,
+        type,
+        fromLabel: 'Сейчас',
+        toLabel: 'После реализации',
+        items: [{ label: '', from: '', to: '', suffix: null }],
+      };
+    case 'zones':
+      return {
+        id,
+        type,
+        items: [
+          { name: '', kind: 'mass', role: '', text: '', stats: [], features: [], mediaId: null, shotIds: [] },
+        ],
+      };
+    case 'orgchart':
+      return {
+        id,
+        type,
+        nodes: [{ id: 'n1', parentId: null, title: '', subtitle: null, accent: true, stack: false }],
+      };
+    case 'flow':
+      return {
+        id,
+        type,
+        title: null,
+        steps: [
+          { icon: 'dot', title: '', text: null, note: null },
+          { icon: 'dot', title: '', text: null, note: null },
+        ],
+      };
+    case 'donut':
+      return {
+        id,
+        type,
+        title: null,
+        caption: null,
+        segments: [
+          { label: '', note: null, percent: 50, color: 'green' },
+          { label: '', note: null, percent: 50, color: 'blue' },
+        ],
+      };
   }
+}
+
+/* -------------------------------------------------------- ссылки на медиа */
+
+/**
+ * Идентификаторы медиафайлов, на которые ссылается блочный контент.
+ *
+ * Блоки хранят только id, поэтому сервер обязан приложить к странице словарь
+ * используемых файлов — иначе картинка в блоке рисуется пустотой. Собирать
+ * их приходится централизованно: каждый новый тип блока со своим полем
+ * mediaId легко забыть, а на странице это выглядит как «пропали изображения».
+ */
+export function collectMediaIds(blocks: Blocks): string[] {
+  const ids = new Set<string>();
+  const add = (v?: string | null) => {
+    if (v) ids.add(v);
+  };
+
+  for (const b of blocks) {
+    switch (b.type) {
+      case 'image':
+        add(b.mediaId);
+        break;
+      case 'gallery':
+        b.mediaIds.forEach(add);
+        break;
+      case 'video':
+        add(b.mediaId);
+        add(b.posterId);
+        break;
+      case 'cta':
+        add(b.mediaId);
+        break;
+      case 'sections':
+        b.items.forEach((i) => add(i.mediaId));
+        break;
+      case 'zones':
+        b.items.forEach((i) => {
+          add(i.mediaId);
+          i.shotIds.forEach(add);
+        });
+        break;
+      default:
+        break;
+    }
+  }
+  return [...ids];
 }
 
 /* ------------------------------------------------------------- санитайзер */

@@ -55,4 +55,21 @@ export class MediaMapper {
   toDtoMany(rows: MediaRow[]): Media[] {
     return rows.map((r) => this.toDto(r));
   }
+
+  /**
+   * Словарь медиа по id для блочного контента.
+   *
+   * Блоки хранят только идентификаторы; страница отдаёт словарь целиком,
+   * чтобы сайт не ходил за каждым файлом отдельно. Отсутствующий файл
+   * (удалён из библиотеки) просто не попадает в словарь — фронт рисует
+   * заглушку, страница остаётся рабочей.
+   */
+  async mapForBlocks(
+    prismaMedia: { findMany(args: { where: { id: { in: string[] } } }): Promise<MediaRow[]> },
+    ids: string[],
+  ): Promise<Record<string, Media>> {
+    if (ids.length === 0) return {};
+    const rows = await prismaMedia.findMany({ where: { id: { in: ids } } });
+    return Object.fromEntries(rows.map((r) => [r.id, this.toDto(r)]));
+  }
 }

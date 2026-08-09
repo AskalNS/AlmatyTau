@@ -5,6 +5,7 @@ import {
   type PublicHero,
   type Locale,
   blocksSchema,
+  collectMediaIds,
 } from '@atm/contracts';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -55,6 +56,25 @@ export class HomeService {
         .map((r) => this.toSection(r, locale))
         .filter((x): x is PublicHomeSection => x !== null);
 
+      const media = await this.media.mapForBlocks(
+        this.prisma.media,
+        collectMediaIds(sections.flatMap((s) => s.blocks)),
+      );
+
+      // Кадры анимированного баннера — из блока «Галерея» секции «Главный
+      // экран». Постер идёт первым: он же LCP-элемент и запасной вариант,
+      // когда анимация отключена настройками системы.
+      const heroSection = sections.find((s) => s.type === 'hero');
+      if (heroSection?.hero) {
+        const gallery = heroSection.blocks.find((b) => b.type === 'gallery');
+        const frames = gallery
+          ? gallery.mediaIds.map((id) => media[id]).filter((m): m is NonNullable<typeof m> => !!m)
+          : [];
+        heroSection.hero.frames = heroSection.hero.poster
+          ? [heroSection.hero.poster, ...frames.filter((f) => f.id !== heroSection.hero!.poster!.id)]
+          : frames;
+      }
+
       const newsList = await this.news.publicList(
         { page: 1, limit: newsCount, order: 'desc' } as never,
         locale,
@@ -68,6 +88,7 @@ export class HomeService {
         sections,
         news: newsList.items,
         links: [...links, ...govLinks],
+        media,
         seo: {
           title: heroTr?.title ?? 'ТОО «Almaty Tau Management»',
           description: heroTr?.subtitle ?? null,
@@ -92,6 +113,8 @@ export class HomeService {
         subtitle: tr.subtitle,
         poster: row.heroPoster ? this.media.toDto(row.heroPoster) : null,
         video: row.heroVideo ? this.media.toDto(row.heroVideo) : null,
+        // Заполняется в publicHome, когда собран словарь медиа.
+        frames: [],
         videoOnMobile: row.videoOnMobile,
         primaryLabel: tr.primaryLabel,
         primaryHref: tr.primaryHref,

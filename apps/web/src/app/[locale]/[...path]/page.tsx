@@ -68,7 +68,7 @@ export default async function ContentPage({
           {page.lead && <p className={styles.lead}>{page.lead}</p>}
         </header>
         <div className={styles.body}>
-          <BlockRenderer blocks={page.blocks} locale={loc} />
+          <BlockRenderer blocks={page.blocks} locale={loc} mediaMap={page.media} />
         </div>
       </div>
     </>

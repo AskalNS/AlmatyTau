@@ -30,6 +30,49 @@
   background: linear-gradient(180deg, rgba(8, 33, 28, 0.62) 0%, rgba(8, 33, 28, 0.22) 42%, rgba(8, 33, 28, 0.78) 100%);
 }
 
+/* --------------------------------------------- анимированный баннер -------
+   Кадры сменяются перекрёстным затуханием, поверх — медленный наезд камеры.
+   Движение намеренно очень медленное: баннер стоит за текстом, и заметная
+   анимация мешала бы читать заголовок.                                     */
+
+.banner {
+  position: absolute;
+  inset: 0;
+}
+.frame {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.6s ease-in-out;
+}
+.frame[data-on='on'] {
+  opacity: 1;
+}
+.frame[data-on='on'] .poster {
+  animation: heroZoom 16s ease-out forwards;
+}
+@keyframes heroZoom {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.12);
+  }
+}
+
+/* Движение отключается и системной настройкой, и режимом для слабовидящих. */
+@media (prefers-reduced-motion: reduce) {
+  .frame {
+    transition: none;
+  }
+  .frame[data-on='on'] .poster {
+    animation: none;
+  }
+}
+:global(html[data-a11y='on']) .banner {
+  display: none;
+}
+
 .content {
   position: relative;
   z-index: 2;

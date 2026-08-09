@@ -4,6 +4,7 @@ import { LOCALE_SHORT, LOCALES, href as buildHref, ROUTES } from '@atm/contracts
 import { dict } from '@/lib/dictionary';
 import { LogoMark } from './Logo';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { A11yLink } from './A11yLink';
 import { MobileNav } from './MobileNav';
 import styles from './header.module.css';
 
@@ -35,11 +36,10 @@ export function Header({
 
       <div className={styles.top}>
         <div className={`wrap ${styles.topInner}`}>
-          <span className={styles.topAddr}>{settings.address}</span>
+          {/* Адрес в верхней строке не выводится: по замечанию Заказчика
+              от 28.07.2026 он остаётся только в подвале. */}
           <span className={styles.spacer} />
-          <Link className={styles.a11yLink} href={`${buildHref(locale, path)}?a11y=on`}>
-            ◐ {t.a11y}
-          </Link>
+          <A11yLink className={styles.a11yLink} label={t.a11y} />
           <Link className={styles.searchLink} href={buildHref(locale, ROUTES.search)}>
             ⌕ {t.search}
           </Link>
@@ -50,10 +50,9 @@ export function Header({
       <div className={styles.main}>
         <div className={`wrap ${styles.mainInner}`}>
           <Link href={buildHref(locale, ROUTES.home)} className={styles.logo} aria-label={settings.organizationName}>
-            <LogoMark />
+            <LogoMark height={42} />
             <span className={styles.logoName}>
-              ALMATY TAU<br />MANAGEMENT
-              <small>{locale === 'kk' ? 'Алматы тау кластері' : locale === 'en' ? 'Almaty Mountain Cluster' : 'Алматинский горный кластер'}</small>
+              {locale === 'kk' ? 'Алматы тау кластері' : locale === 'en' ? 'Almaty Mountain Cluster' : 'Алматинский горный кластер'}
             </span>
           </Link>
 

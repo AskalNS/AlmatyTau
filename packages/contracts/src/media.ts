@@ -121,6 +121,8 @@ export const albumSchema = z.object({
   coverId: z.string().nullable(),
   publishedAt: isoDateSchema.nullable(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']),
+  /** Позиция в списке галереи: порядок альбомов задаёт редактор. */
+  order: z.number().int(),
   mediaIds: z.array(z.string()),
   translations: z.array(albumTranslationSchema),
   createdAt: isoDateSchema,
@@ -137,6 +139,8 @@ export const publicAlbumSchema = z.object({
   cover: mediaSchema.nullable(),
   items: z.array(mediaSchema),
   publishedAt: isoDateSchema.nullable(),
+  /** Число файлов — подпись на карточке и в заголовке альбома. */
+  count: z.number().int(),
 });
 export type PublicAlbum = z.infer<typeof publicAlbumSchema>;
 
@@ -145,6 +149,7 @@ export const upsertAlbumRequestSchema = z.object({
   coverId: z.string().optional().nullable(),
   mediaIds: z.array(z.string()).max(500).default([]),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).default('DRAFT'),
+  order: z.number().int().default(0),
   publishedAt: z.string().optional().nullable(),
   translations: z.array(albumTranslationSchema).min(1, 'Заполните хотя бы один язык'),
 });

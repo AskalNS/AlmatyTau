@@ -44,12 +44,23 @@ export type PublicNewsCard = z.infer<typeof publicNewsCardSchema>;
 
 export const publicNewsSchema = publicNewsCardSchema.extend({
   blocks: blocksSchema,
+  media: z.record(z.string(), mediaSchema),
   seo: publicSeoSchema,
   related: z.array(publicNewsCardSchema),
 });
 export type PublicNews = z.infer<typeof publicNewsSchema>;
 
 /* ----------------------------------------------------------------- страницы */
+
+/**
+ * Медиафайлы, на которые ссылаются блоки, — словарь по id.
+ *
+ * Блок хранит только идентификатор. Без этого словаря сайту пришлось бы
+ * запрашивать каждый файл отдельно, а до тех пор изображение в блоке
+ * не рисуется вовсе.
+ */
+export const blockMediaMapSchema = z.record(z.string(), mediaSchema);
+export type BlockMediaMap = z.infer<typeof blockMediaMapSchema>;
 
 export const publicPageSchema = z.object({
   id: z.string(),
@@ -58,6 +69,7 @@ export const publicPageSchema = z.object({
   lead: z.string().nullable(),
   cover: mediaSchema.nullable(),
   blocks: blocksSchema,
+  media: blockMediaMapSchema,
   seo: publicSeoSchema,
   updatedAt: isoDateSchema,
 });
@@ -108,6 +120,25 @@ export const publicVacancySchema = z.object({
   publishedAt: isoDateSchema.nullable(),
 });
 export type PublicVacancy = z.infer<typeof publicVacancySchema>;
+
+/* ------------------------------------------------------------ медиагалерея */
+
+/**
+ * Карточка альбома в списке галереи.
+ *
+ * Полный альбом описан в media.ts (publicAlbumSchema) — там же, где медиа.
+ * Здесь только то, что нужно списку: обложка и число файлов в подписи.
+ */
+export const publicAlbumCardSchema = z.object({
+  id: z.string(),
+  slug: slugSchema,
+  title: z.string(),
+  description: z.string().nullable(),
+  cover: mediaSchema.nullable(),
+  publishedAt: isoDateSchema.nullable(),
+  count: z.number().int(),
+});
+export type PublicAlbumCard = z.infer<typeof publicAlbumCardSchema>;
 
 /* ------------------------------------------------------------------ ссылки */
 
@@ -179,6 +210,16 @@ export const publicHeroSchema = z.object({
   subtitle: z.string().nullable(),
   poster: mediaSchema.nullable(),
   video: mediaSchema.nullable(),
+  /**
+   * Кадры анимированного баннера.
+   *
+   * П. 1 ТЗ требует в верхней части главной динамический визуальный блок —
+   * видео **или** анимированный баннер. Кадры берутся из блока «Галерея»
+   * внутри секции «Главный экран»: так Заказчик меняет баннер из админки
+   * теми же средствами, что и остальной контент, без отдельной сущности.
+   * Первый кадр совпадает с постером и остаётся LCP-элементом.
+   */
+  frames: z.array(mediaSchema).default([]),
   /** Отдавать ли видео на мобильных. По умолчанию нет. */
   videoOnMobile: z.boolean(),
   primaryLabel: z.string().nullable(),
@@ -206,6 +247,8 @@ export const publicHomeSchema = z.object({
   sections: z.array(publicHomeSectionSchema),
   news: z.array(publicNewsCardSchema),
   links: z.array(publicLinkSchema),
+  /** Медиа, на которые ссылаются блоки секций. */
+  media: blockMediaMapSchema,
   seo: publicSeoSchema,
 });
 export type PublicHome = z.infer<typeof publicHomeSchema>;

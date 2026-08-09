@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { Inter, Manrope } from 'next/font/google';
+import { Inter, Golos_Text } from 'next/font/google';
 import type { PublicLayout, Locale } from '@atm/contracts';
 import { LOCALES, LOCALE_HTML_LANG, API } from '@atm/contracts';
 import { apiGet } from '@/lib/api';
@@ -12,8 +12,13 @@ import './a11y.css';
 
 /**
  * Шрифты через next/font: самохостинг (никаких запросов к Google на рантайме,
- * п. VIII ТЗ), font-display: swap, сабсет по алфавитам. cyrillic-ext покрывает
- * казахские буквы ә ғ қ ң ө ұ ү һ і — без него они «плывут».
+ * п. VIII ТЗ), font-display: swap, сабсет по алфавитам.
+ *
+ * Заголовочный шрифт — Golos Text, а не Manrope. Manrope при полном сабсете
+ * cyrillic-ext не содержит глифов Ә Ғ Қ Ң Ұ (проверено по cmap файлов,
+ * которые отдаёт next/font): казахские буквы подставлялись системным
+ * шрифтом и отличались начертанием и шириной прямо в фамилиях на странице
+ * «Правление». Golos Text покрывает весь казахский алфавит целиком.
  */
 const inter = Inter({
   subsets: ['latin', 'cyrillic', 'cyrillic-ext'],
@@ -21,12 +26,14 @@ const inter = Inter({
   variable: '--font-inter',
   display: 'swap',
 });
-const manrope = Manrope({
-  subsets: ['latin', 'cyrillic', 'cyrillic-ext'],
-  weight: ['700', '800'],
-  variable: '--font-manrope',
+const display = Golos_Text({
+  subsets: ['latin', 'cyrillic'],
+  weight: ['600', '700', '800'],
+  variable: '--font-display-family',
   display: 'swap',
 });
+
+
 
 export const dynamicParams = false;
 export function generateStaticParams() {
@@ -65,17 +72,25 @@ export default async function LocaleLayout({
   const a11y = cookieStore.get('a11y')?.value === 'on';
   const scheme = cookieStore.get('a11y-scheme')?.value || 'black-white';
   const font = cookieStore.get('a11y-font')?.value || '100';
+  // Межбуквенный интервал и показ изображений — обязательные настройки
+  // версии для слабовидящих наряду с размером шрифта и цветовой схемой.
+  const spacing = cookieStore.get('a11y-spacing')?.value || 'normal';
+  const images = cookieStore.get('a11y-images')?.value !== 'off';
 
   return (
     <html
       lang={LOCALE_HTML_LANG[loc]}
-      className={`${inter.variable} ${manrope.variable}`}
+      className={`${inter.variable} ${display.variable}`}
       data-a11y={a11y ? 'on' : undefined}
       data-scheme={a11y ? scheme : undefined}
+      data-spacing={a11y ? spacing : undefined}
+      data-images={a11y && !images ? 'off' : undefined}
       style={a11y ? ({ ['--a11y-font-scale' as string]: `${Number(font) / 100}` }) : undefined}
     >
       <body>
-        {a11y && <A11yBar locale={loc} scheme={scheme} font={font} />}
+        {a11y && (
+          <A11yBar locale={loc} scheme={scheme} font={font} spacing={spacing} images={images} />
+        )}
         <Header menu={layout.mainMenu} settings={layout.settings} locale={loc} path="" />
         <main id="main">{children}</main>
         <Footer menu={layout.footerMenu} settings={layout.settings} locale={loc} />

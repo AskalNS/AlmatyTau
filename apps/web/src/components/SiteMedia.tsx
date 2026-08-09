@@ -14,6 +14,7 @@ export function SiteImage({
   priority = false,
   className,
   ratio,
+  fit = 'cover',
 }: {
   media: Media | null;
   locale: Locale;
@@ -21,6 +22,15 @@ export function SiteImage({
   priority?: boolean;
   className?: string;
   ratio?: string;
+  /**
+   * Как вписывать кадр в заданное соотношение.
+   *
+   * По умолчанию cover — так ведут себя обложки и фотографии. Для схем и
+   * планов нужен contain: у них по краям подписи станций и объектов, обрезка
+   * их срезает. Свойство задаётся инлайново (аспект считается по месту),
+   * поэтому переопределить его из CSS-модуля нельзя — только через проп.
+   */
+  fit?: 'cover' | 'contain';
 }) {
   if (!media) {
     return <div className={className} style={{ aspectRatio: ratio, background: 'var(--green-50)' }} aria-hidden="true" />;
@@ -49,7 +59,7 @@ export function SiteImage({
         loading={priority ? 'eager' : 'lazy'}
         fetchPriority={priority ? 'high' : undefined}
         decoding="async"
-        style={ratio ? { aspectRatio: ratio, objectFit: 'cover', width: '100%' } : undefined}
+        style={ratio ? { aspectRatio: ratio, objectFit: fit, width: '100%' } : undefined}
       />
     </picture>
   );

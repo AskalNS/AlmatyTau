@@ -8,6 +8,7 @@ import {
   type Paginated,
   type Locale,
   blocksSchema,
+  collectMediaIds,
   ROUTES,
 } from '@atm/contracts';
 import type { Prisma } from '@prisma/client';
@@ -193,9 +194,11 @@ export class NewsService {
 
       const available = availableLocales(row.translations);
       const card = this.toCard(row, locale)!;
+      const blocks = blocksSchema.parse(tr.blocks);
       const dto: PublicNews = {
         ...card,
-        blocks: blocksSchema.parse(tr.blocks),
+        blocks,
+        media: await this.media.mapForBlocks(this.prisma.media, collectMediaIds(blocks)),
         seo: buildSeo(
           { title: tr.title, seoTitle: tr.seoTitle, seoDescription: tr.seoDescription, seoNoindex: tr.seoNoindex },
           available,

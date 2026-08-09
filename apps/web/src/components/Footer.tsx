@@ -24,10 +24,7 @@ export function Footer({
         <div className={styles.cols}>
           <div>
             <Link href={buildHref(locale, ROUTES.home)} className={styles.logo}>
-              <LogoMark light />
-              <span>
-                ALMATY TAU<br />MANAGEMENT
-              </span>
+              <LogoMark light height={40} />
             </Link>
             {settings.footerText && <p className={styles.about}>{settings.footerText}</p>}
           </div>

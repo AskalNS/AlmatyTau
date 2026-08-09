@@ -42,15 +42,9 @@
 }
 
 .logo {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 11px;
   margin-bottom: 18px;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 15px;
-  line-height: 1.15;
-  color: #fff;
 }
 .about {
   font-size: 14px;

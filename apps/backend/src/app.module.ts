@@ -26,6 +26,7 @@ import { PagesModule } from './modules/pages/pages.module';
 import { PersonsModule } from './modules/persons/persons.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { VacanciesModule } from './modules/vacancies/vacancies.module';
+import { AlbumsModule } from './modules/albums/albums.module';
 import { LinksModule } from './modules/links/links.module';
 import { MenuModule } from './modules/menu/menu.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
@@ -76,6 +77,7 @@ import { SiteModule } from './modules/site/site.module';
     PersonsModule,
     DocumentsModule,
     VacanciesModule,
+    AlbumsModule,
     LinksModule,
     MenuModule,
     FeedbackModule,

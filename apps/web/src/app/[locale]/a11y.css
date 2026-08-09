@@ -1,57 +1,267 @@
 /* ============================================================================
    Версия для слабовидящих (п. VI ТЗ).
 
-   Активируется атрибутом data-a11y="on" на <html>, схема — data-scheme.
-   Применяется на сервере из cookie, поэтому нет мигания при загрузке.
+   Активируется атрибутом data-a11y="on" на <html>; схема, интервал и показ
+   изображений — атрибутами data-scheme, data-spacing, data-images.
+   Всё применяется на сервере из cookie, поэтому нет мигания при загрузке.
+
+   Ключевое отличие от прежней версии: схема перекрашивает не только текст
+   body, но и весь контент — карточки, таблицы, шапку, подвал, формы, блоки
+   с собственным фоном. Иначе в схеме «белым по чёрному» страница оставалась
+   набором белых плашек, и режим был декоративным.
+
+   Приём: два токена --a11y-bg и --a11y-fg на <html>, всё остальное красится
+   от них. Ширина правил намеренно большая (!important), потому что режим
+   обязан перебивать любые модульные стили, включая будущие.
    ========================================================================== */
 
 html[data-a11y='on'] {
   --a11y-font-scale: 1;
+  --a11y-bg: #fff;
+  --a11y-fg: #000;
+  /* Приглушённый оттенок фона для вложенных плашек: полностью убирать
+     разделение блоков нельзя, structure страницы должна читаться. */
+  --a11y-bg-alt: #f0f0f0;
+  --a11y-line: #000;
+}
+
+html[data-a11y='on'][data-scheme='white-black'] {
+  --a11y-bg: #000;
+  --a11y-fg: #fff;
+  --a11y-bg-alt: #1a1a1a;
+  --a11y-line: #fff;
+}
+html[data-a11y='on'][data-scheme='yellow-black'] {
+  --a11y-bg: #000;
+  --a11y-fg: #ffe600;
+  --a11y-bg-alt: #1a1a00;
+  --a11y-line: #ffe600;
+}
+html[data-a11y='on'][data-scheme='blue-cyan'] {
+  --a11y-bg: #9dd1ff;
+  --a11y-fg: #062b4a;
+  --a11y-bg-alt: #b8dcff;
+  --a11y-line: #062b4a;
+}
+
+/* --------------------------------------------------------------- типографика */
+
+html[data-a11y='on'],
+html[data-a11y='on'] body {
+  background: var(--a11y-bg) !important;
+  color: var(--a11y-fg) !important;
 }
 
 html[data-a11y='on'] body {
   font-size: calc(17px * var(--a11y-font-scale));
   line-height: 1.9;
+  /* Шрифт без декоративных деталей и с полным казахским алфавитом. */
+  font-family: var(--font-inter), 'Segoe UI', Arial, sans-serif !important;
 }
 
-/* Увеличиваем весь текст пропорционально шкале. */
 html[data-a11y='on'] h1 { font-size: calc(38px * var(--a11y-font-scale)); }
 html[data-a11y='on'] h2 { font-size: calc(30px * var(--a11y-font-scale)); }
 html[data-a11y='on'] h3 { font-size: calc(24px * var(--a11y-font-scale)); }
-
-/* Цветовые схемы. Каждая пара проверена на максимальный контраст. */
-html[data-a11y='on'][data-scheme='black-white'] { background: #fff; }
-html[data-a11y='on'][data-scheme='black-white'] body { background: #fff; color: #000; }
-
-html[data-a11y='on'][data-scheme='white-black'] { background: #000; }
-html[data-a11y='on'][data-scheme='white-black'] body { background: #000; color: #fff; }
-
-html[data-a11y='on'][data-scheme='yellow-black'] { background: #000; }
-html[data-a11y='on'][data-scheme='yellow-black'] body { background: #000; color: #ffe600; }
-
-html[data-a11y='on'][data-scheme='blue-cyan'] { background: #9dd1ff; }
-html[data-a11y='on'][data-scheme='blue-cyan'] body { background: #9dd1ff; color: #062b4a; }
-
-/* В режиме для слабовидящих убираем декоративную сложность:
-   единый цвет ссылок, подчёркивание, крупные интерактивные зоны. */
-html[data-a11y='on'] a {
-  color: inherit;
-  text-decoration: underline;
-}
-html[data-a11y='on'][data-scheme='white-black'] a,
-html[data-a11y='on'][data-scheme='yellow-black'] a {
-  color: inherit;
+html[data-a11y='on'] h4 { font-size: calc(20px * var(--a11y-font-scale)); }
+html[data-a11y='on'] h1,
+html[data-a11y='on'] h2,
+html[data-a11y='on'] h3,
+html[data-a11y='on'] h4 {
+  font-family: inherit !important;
+  color: inherit !important;
 }
 
-/* Изображения приглушаются, но не скрываются: скрытие управляется
-   отдельной настройкой в реальной эксплуатации. */
-html[data-a11y='on'] .btn {
-  border: 2px solid currentColor !important;
+html[data-a11y='on'][data-spacing='medium'] body { letter-spacing: 0.06em; word-spacing: 0.12em; }
+html[data-a11y='on'][data-spacing='large'] body { letter-spacing: 0.12em; word-spacing: 0.24em; }
+
+/* ------------------------------------------------------------------- контент */
+
+/* Всё, что имело собственный фон, тень или рамку, приводится к схеме. */
+html[data-a11y='on'] header,
+html[data-a11y='on'] main,
+html[data-a11y='on'] footer,
+html[data-a11y='on'] section,
+html[data-a11y='on'] article,
+html[data-a11y='on'] aside,
+html[data-a11y='on'] nav,
+html[data-a11y='on'] figure,
+html[data-a11y='on'] blockquote,
+html[data-a11y='on'] table,
+html[data-a11y='on'] th,
+html[data-a11y='on'] td,
+html[data-a11y='on'] ul,
+html[data-a11y='on'] ol,
+html[data-a11y='on'] li,
+html[data-a11y='on'] div,
+html[data-a11y='on'] p,
+html[data-a11y='on'] dl,
+html[data-a11y='on'] dt,
+html[data-a11y='on'] dd,
+html[data-a11y='on'] span,
+html[data-a11y='on'] strong,
+html[data-a11y='on'] small,
+html[data-a11y='on'] time,
+html[data-a11y='on'] details,
+html[data-a11y='on'] summary {
+  background-color: transparent !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* Границы остаются, но одним контрастным цветом: без них теряется
+   структура списков карточек и таблиц. */
+html[data-a11y='on'] *[class*='card'],
+html[data-a11y='on'] *[class*='zone'],
+html[data-a11y='on'] *[class*='compare'],
+html[data-a11y='on'] *[class*='orgNode'],
+html[data-a11y='on'] *[class*='sectionsNav'],
+html[data-a11y='on'] table,
+html[data-a11y='on'] th,
+html[data-a11y='on'] td {
+  border-color: var(--a11y-line) !important;
+}
+html[data-a11y='on'] *[class*='card'],
+html[data-a11y='on'] *[class*='orgNode'] {
+  border: 2px solid var(--a11y-line) !important;
+}
+
+/* Декоративные полосы, кружки и подложки иконок убираются: в монохромной
+   схеме они превращаются в бессмысленные прямоугольники. */
+html[data-a11y='on'] *[class*='card']::before,
+html[data-a11y='on'] *[class*='eyebrow']::before,
+html[data-a11y='on'] *[class*='compareArrow']::after {
+  display: none !important;
+}
+html[data-a11y='on'] *[class*='Icon'] {
   background: transparent !important;
   color: inherit !important;
 }
 
-/* Панель управления режимом. */
+/* Активный пункт бокового меню: заливкой в монохроме не выделить,
+   поэтому берём инверсию. */
+html[data-a11y='on'] *[class*='sectionsNavOn'] {
+  background: var(--a11y-fg) !important;
+  color: var(--a11y-bg) !important;
+}
+html[data-a11y='on'] *[class*='sectionsNavOn'] * {
+  color: var(--a11y-bg) !important;
+}
+
+/* Ссылки: единый цвет и обязательное подчёркивание. */
+html[data-a11y='on'] a {
+  color: inherit !important;
+  text-decoration: underline !important;
+}
+html[data-a11y='on'] a:hover,
+html[data-a11y='on'] a:focus-visible {
+  background: var(--a11y-bg-alt) !important;
+}
+
+html[data-a11y='on'] .btn,
+html[data-a11y='on'] button:not(.a11y-bar button),
+html[data-a11y='on'] input,
+html[data-a11y='on'] textarea,
+html[data-a11y='on'] select {
+  border: 2px solid var(--a11y-line) !important;
+  background: transparent !important;
+  color: inherit !important;
+  border-radius: 0 !important;
+  min-height: 44px;
+}
+
+html[data-a11y='on'] :focus-visible {
+  outline: 3px solid var(--a11y-fg) !important;
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------- шапка и меню ---
+   При крупном шрифте и большом интервале горизонтальное меню перестаёт
+   влезать в строку, и страница получает горизонтальную прокрутку — это
+   прямое нарушение WCGA 1.4.10. Поэтому в режиме шапка перестраивается:
+   строки переносятся, высота считается по содержимому.                    */
+
+html[data-a11y='on'] header *[class*='topInner'],
+html[data-a11y='on'] header *[class*='mainInner'] {
+  height: auto !important;
+  flex-wrap: wrap;
+  row-gap: 8px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+html[data-a11y='on'] header nav {
+  flex-wrap: wrap;
+  row-gap: 4px;
+  margin-left: 0 !important;
+}
+html[data-a11y='on'] header *[class*='navLink'] {
+  padding: 6px 0 !important;
+}
+/* Выпадающие списки: без непрозрачного фона в монохроме они накладываются
+   на текст страницы и оба слоя становятся нечитаемыми. */
+/* Только контейнер списка: `dropdown__` отсекает `dropdownLink__`,
+   иначе рамка появляется ещё и у каждого пункта. */
+html[data-a11y='on'] *[class*='dropdown__'] {
+  background-color: var(--a11y-bg) !important;
+  border: 2px solid var(--a11y-line) !important;
+}
+/* Активный язык и прочие «пилюли» с фирменной заливкой — в инверсию схемы. */
+/* Класс активного языка приходит из CSS-модуля (`lang_on__hash`), поэтому
+   селектор идёт по вхождению, а не по литеральному `.on`. */
+html[data-a11y='on'] a[class*='lang_on'],
+html[data-a11y='on'] .tag {
+  background-color: var(--a11y-fg) !important;
+  color: var(--a11y-bg) !important;
+}
+/* Страховка от горизонтальной прокрутки на всей странице. */
+html[data-a11y='on'] body {
+  overflow-x: hidden;
+}
+
+/* ---------------------------------------------------------------- медиа ----- */
+
+/* Изображения по умолчанию видны, но приглушены до нормального контраста;
+   кнопкой на панели их можно скрыть целиком вместе с декоративными фонами. */
+html[data-a11y='on'] img {
+  filter: grayscale(1) contrast(1.1);
+}
+html[data-a11y='on'][data-images='off'] img,
+html[data-a11y='on'][data-images='off'] video,
+html[data-a11y='on'][data-images='off'] iframe,
+html[data-a11y='on'][data-images='off'] svg:not(.a11y-keep) {
+  display: none !important;
+}
+html[data-a11y='on'][data-images='off'] *[class*='Media'],
+html[data-a11y='on'][data-images='off'] *[class*='cover'],
+html[data-a11y='on'][data-images='off'] *[class*='poster'] {
+  display: none !important;
+}
+
+/* Анимации в режиме не нужны никому: они мешают и отвлекают. */
+html[data-a11y='on'] * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Главный экран превращается в обычный заголовок.
+   Фоновое фото и затемняющая плашка убираются всегда, независимо от кнопки
+   «Изображения»: текст поверх фотографии — ровно то, что в этом режиме
+   не читается, а декоративной ценности здесь нет. */
+html[data-a11y='on'] *[class*='veil'],
+html[data-a11y='on'] *[class*='hero_bg'],
+html[data-a11y='on'] *[class*='hero_poster'],
+html[data-a11y='on'] *[class*='hero_banner'],
+html[data-a11y='on'] *[class*='hero_video'] {
+  display: none !important;
+}
+html[data-a11y='on'] *[class*='hero_hero'] {
+  min-height: 0 !important;
+  color: inherit !important;
+  padding: 0 !important;
+}
+
+/* --------------------------------------------------------- панель режима --- */
+
 .a11y-bar {
   background: #000;
   color: #ffe600;
@@ -74,6 +284,11 @@ html[data-a11y='on'] .btn {
   display: flex;
   gap: 6px;
 }
+html[data-a11y='on'] .a11y-bar,
+html[data-a11y='on'] .a11y-bar * {
+  background-color: #000 !important;
+  color: #ffe600 !important;
+}
 .a11y-bar button {
   background: transparent;
   color: #ffe600;
@@ -82,11 +297,14 @@ html[data-a11y='on'] .btn {
   font-size: 16px;
   cursor: pointer;
   font-family: inherit;
+  min-height: 40px;
 }
-.a11y-bar button.on {
-  background: #ffe600;
-  color: #000;
+html[data-a11y='on'] .a11y-bar button.on {
+  background-color: #ffe600 !important;
+  color: #000 !important;
 }
 .a11y-off {
   margin-left: auto;
+  color: #ffe600;
+  text-decoration: underline;
 }

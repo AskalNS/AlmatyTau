@@ -25,6 +25,7 @@
     "db:generate": "pnpm --filter @atm/backend prisma:generate",
     "db:migrate": "pnpm --filter @atm/backend prisma:migrate",
     "db:seed": "pnpm --filter @atm/backend prisma:seed",
+    "db:seed:content": "pnpm --filter @atm/backend content:seed",
     "db:studio": "pnpm --filter @atm/backend prisma:studio",
     "up": "docker compose up -d --build",
     "down": "docker compose down",

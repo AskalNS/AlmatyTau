@@ -17,6 +17,14 @@
   --gold-700: #8a6220;
   --sky-500: #2b87b8;
   --sky-700: #1f6a94;
+
+  /* Фирменные цвета утверждённого логотипа ATM — знак и словесная часть.
+     Используются там, где элемент соседствует с логотипом или относится
+     к самой компании, чтобы знак не выглядел чужеродным. */
+  --brand-300: #9ac8e5;
+  --brand-500: #68a7cd;
+  --brand-700: #3c7ba6;
+  --brand-900: #1f3f5c;
   --s-0: #ffffff;
   --s-50: #f7f8f8;
   --s-100: #eff1f1;
@@ -34,7 +42,9 @@
   --sh-1: 0 1px 2px rgba(20, 24, 23, 0.06);
   --sh-2: 0 8px 24px rgba(20, 24, 23, 0.1);
 
-  --font-display: var(--font-manrope), 'Segoe UI', system-ui, sans-serif;
+  /* Запасные шрифты тоже с полной казахской кириллицей: Segoe UI и Arial
+     содержат Ә Ғ Қ Ң Ө Ұ Ү Һ І, поэтому подмена не ломает начертание. */
+  --font-display: var(--font-display-family), 'Segoe UI', system-ui, sans-serif;
   --font-text: var(--font-inter), 'Segoe UI', system-ui, sans-serif;
   --wrap: 1280px;
 }
