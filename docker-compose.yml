@@ -178,6 +178,12 @@ services:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
       REVALIDATE_SECRET: ${REVALIDATE_SECRET}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     networks: [internal]
 
   # ------------------------------------------------------------------- Admin
@@ -189,6 +195,12 @@ services:
         VITE_API_URL: ${VITE_API_URL}
     restart: unless-stopped
     <<: *logging
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks: [internal]
 
   # ------------------------------------------------------------------- Nginx
@@ -196,7 +208,10 @@ services:
     image: nginx:1.27-alpine
     restart: unless-stopped
     <<: *logging
-    depends_on: [web, admin, backend]
+    depends_on:
+      backend: { condition: service_healthy }
+      web:     { condition: service_healthy }
+      admin:   { condition: service_healthy }
     ports:
       - "80:80"
       - "443:443"

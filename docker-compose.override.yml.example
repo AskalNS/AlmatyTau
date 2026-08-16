@@ -1,0 +1,58 @@
+# =============================================================================
+#  Локальный оверрайд для тестирования на своей машине.
+#
+#    cp docker-compose.override.yml.example docker-compose.override.yml
+#    docker compose up -d --build
+#
+#  Docker Compose подхватывает docker-compose.override.yml автоматически,
+#  ничего указывать в командной строке не нужно. Файл в .gitignore — на
+#  боевой сервер не попадает и на бой никак не влияет.
+#
+#  Что делает:
+#    - публикует порты Postgres/Redis/MinIO/Swagger на localhost, чтобы
+#      подключаться к ним инструментами с хоста (DBeaver, RedisInsight,
+#      curl и т.п.);
+#    - поднимает Mailpit и переключает на него почту, чтобы видеть письма
+#      формы обратной связи и приглашений без реального SMTP.
+#
+#  Запускать и разрабатывать проект без Docker не нужно и не предполагается —
+#  это лишь удобный доступ к портам уже запущенного докер-стека.
+# =============================================================================
+
+services:
+
+  postgres:
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  redis:
+    ports:
+      - "127.0.0.1:6379:6379"
+
+  minio:
+    ports:
+      - "127.0.0.1:9000:9000"   # S3 API
+      - "127.0.0.1:9001:9001"   # веб-консоль
+
+  backend:
+    ports:
+      - "127.0.0.1:4000:4000"   # http://localhost:4000/api/docs
+    environment:
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_SECURE: "false"
+
+  web:
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  admin:
+    ports:
+      - "127.0.0.1:3001:80"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"   # веб-интерфейс: http://localhost:8025
+    networks: [internal]
