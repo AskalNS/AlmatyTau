@@ -14,6 +14,8 @@ const nextConfig = {
       { protocol: 'https', hostname: '**' },
       { protocol: 'http', hostname: 'minio' },
       { protocol: 'http', hostname: 'localhost' },
+      // Временно, пока нет домена media.atm.kz — отдаём медиа по IP сервера.
+      { protocol: 'http', hostname: '154.59.110.127' },
     ],
     formats: ['image/avif', 'image/webp'],
   },
