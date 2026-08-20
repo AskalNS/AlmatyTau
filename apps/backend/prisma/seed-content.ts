@@ -24,6 +24,7 @@ import { PrismaClient, Locale, PublishStatus } from '@prisma/client';
 import type { Blocks } from '@atm/contracts';
 import { prepareStorage, upsertImage } from './content/media';
 import { prepareDocumentStorage, upsertDocumentFile, type SeedDocument } from './content/documents';
+import { NEWS_ARTICLES } from './content/texts-news';
 import { reindexSearch } from './reindex-search';
 import {
   HERO,
@@ -138,23 +139,54 @@ const IMAGES: Array<{ file: string; alt: T }> = [
     source: 'Фото: Kalabaha1969, Wikimedia Commons, лицензия CC BY-SA 3.0',
   },
   {
-    // Летний кадр той же кабины на кресельной канатной дороге — по тому же
-    // замечанию: баннер должен чередовать зиму и лето, а не показывать
-    // только снег.
-    file: 'hero-cablecar-summer.jpg',
+    // Три новых кадра баннера, присланные Заказчиком (папка «banner» к
+    // замечанию от 19.08.2026, п. 1) — заменяют прежний летний стоковый
+    // кадр (hero-cablecar-summer.jpg): зима и лето продолжают чередоваться,
+    // плюс добавлен вид на каток Медео.
+    file: 'hero-shymbulak-summer.jpg',
     alt: {
-      ru: 'Кабины кресельной канатной дороги над летним склоном Шымбулака',
-      kk: 'Шымбұлақтың жазғы беткейі үстіндегі орындықты аспалы жол кабиналары',
-      en: 'Chairlift cabins above a green summer slope at Shymbulak',
+      ru: 'Кабины кабинной канатной дороги над летним склоном Шымбулака',
+      kk: 'Шымбұлақтың жазғы беткейі үстіндегі кабиналы аспалы жол вагоншалары',
+      en: 'Gondola cabins above a green summer slope at Shymbulak',
     },
-    source: 'Фото: Kober, Wikimedia Commons, лицензия CC BY-SA 4.0',
   },
   {
+    file: 'hero-shymbulak-winter.jpg',
+    alt: {
+      ru: 'Канатная дорога на фоне заснеженных вершин горнолыжного курорта Шымбулак',
+      kk: 'Шымбұлақ тау-шаңғы курортының қарлы шыңдары аясындағы аспалы жол',
+      en: 'Cable car against the snow-capped peaks of the Shymbulak ski resort',
+    },
+  },
+  {
+    file: 'hero-medeo-katok.jpg',
+    alt: {
+      ru: 'Вид с канатной дороги на высокогорный каток Медео',
+      kk: 'Аспалы жолдан Медеу асқарлы мұз айдынына көрінетін көрініс',
+      en: 'View of the Medeo high-altitude skating rink from the cable car',
+    },
+  },
+  {
+    // Прежний файл был спутниковым рендером с надписью «Issyk-Kul» на
+    // кадре — заменён на настоящую фотографию Заилийского Алатау
+    // (замечание Заказчика от 19.08.2026, п. 16).
     file: 'hero-range.jpg',
     alt: {
       ru: 'Панорама заснеженных хребтов Заилийского Алатау',
       kk: 'Іле Алатауының қарлы жоталарының панорамасы',
       en: 'Panorama of the snow-covered ridges of the Ile Alatau',
+    },
+    source: 'Фото: Сергей Марцынюк, Wikimedia Commons, лицензия CC BY-SA 3.0',
+  },
+  {
+    // Обложка страницы /project («главный экран» раздела «Алматинский
+    // горный кластер»), присланная Заказчиком (папка
+    // «АлматинскийГорныйКласстер» к замечанию от 19.08.2026, п. 16).
+    file: 'project-cover-2.jpg',
+    alt: {
+      ru: 'Панорама Алматы на фоне заснеженного Заилийского Алатау',
+      kk: 'Қарлы Іле Алатауы аясындағы Алматы панорамасы',
+      en: 'Panorama of Almaty against the snow-capped Ile Alatau',
     },
   },
   {
@@ -222,22 +254,55 @@ const IMAGES: Array<{ file: string; alt: T }> = [
     },
   },
   {
-    file: 'value-social.jpg',
+    // Прежний файл заменён на фото, присланное Заказчиком (папка
+    // «obshestvennoedeyatelnost» к замечанию от 19.08.2026, п. 16): группа
+    // подростков в горнолыжной форме — иллюстрирует инклюзивную и детскую
+    // направленность курортов, а не общую прогулку в горах.
+    file: 'value-social-2.jpg',
     alt: {
-      ru: 'Семья с детьми на прогулке в зимних горах',
-      kk: 'Қысқы тауда серуендеп жүрген балалы отбасы',
-      en: 'A family with children on a walk in the winter mountains',
+      ru: 'Группа юных горнолыжников на курорте перед тренировкой',
+      kk: 'Курортта жаттығу алдында тұрған жас тау шаңғышыларының тобы',
+      en: 'A group of young skiers at the resort before training',
     },
   },
   {
+    // Присланное Заказчиком фото (та же папка) — заполняет пробел: у
+    // направления «Развитие человеческого капитала» изображения не было
+    // вовсе (см. VALUE_SECTIONS в content/texts-project.ts).
+    file: 'value-education.jpg',
+    alt: {
+      ru: 'Занятие с юными горнолыжниками на склоне курорта',
+      kk: 'Курорт беткейінде жас тау шаңғышыларымен өткізілетін сабақ',
+      en: 'A training session with young skiers on the resort slope',
+    },
+  },
+  {
+    // Присланное Заказчиком фото (та же папка) — заменяет вынужденное
+    // повторное использование hero-range.jpg в разделе «Безопасность
+    // посетителей» (замечание от 19.08.2026, п. 16: фото не соответствовали
+    // содержанию направлений).
+    file: 'value-safety.jpg',
+    alt: {
+      ru: 'Стойка выдачи снаряжения и регистрации посетителей на курорте',
+      kk: 'Курорттағы жабдық беру және келушілерді тіркеу стойкасы',
+      en: 'Equipment rental and visitor check-in desk at the resort',
+    },
+  },
+  {
+    // Прежний файл (чёрно-белая панорама) заменён на цветное фото по
+    // замечанию Заказчика от 19.08.2026 (п. 3 и п. 16).
     file: 'value-economy.jpg',
     alt: {
-      ru: 'Панорама Алматы на фоне горного хребта',
-      kk: 'Тау жотасы аясындағы Алматы панорамасы',
-      en: 'Panorama of Almaty against the mountain ridge',
+      ru: 'Панорама делового центра Алматы на фоне гор',
+      kk: 'Таулар аясындағы Алматы іскерлік орталығының панорамасы',
+      en: 'Panorama of Almaty’s business district against the mountains',
     },
+    source: 'Фото: Dauren Nabijan, Wikimedia Commons, общественное достояние (CC0)',
   },
   {
+    // Используется в галерее троп (страница «Технологии»/«Тропы»), не путать
+    // с value-sport-2.jpg ниже — новым фото для направления «Спортивная
+    // инфраструктура мирового уровня».
     file: 'value-sport.jpg',
     alt: {
       ru: 'Оборудованная горная тропа',
@@ -246,11 +311,26 @@ const IMAGES: Array<{ file: string; alt: T }> = [
     },
   },
   {
-    file: 'value-tourism.jpg',
+    // Присланное Заказчиком фото — для направления «Спортивная
+    // инфраструктура мирового уровня» (см. VALUE_SECTIONS, anchor 'sport').
+    // Новое имя файла вместо перезаписи value-sport.jpg — тот файл занят
+    // в другой галерее, а одинаковые имена при разном содержимом ловят
+    // клиентов на годовом immutable-кэше картинок.
+    file: 'value-sport-2.jpg',
     alt: {
-      ru: 'Дорога к горным курортам зимой',
-      kk: 'Қыста тау курорттарына апаратын жол',
-      en: 'The road to the mountain resorts in winter',
+      ru: 'Горнолыжник на трассе слалома во время соревнований',
+      kk: 'Жарыс кезінде слалом трассасындағы тау шаңғышысы',
+      en: 'A skier on a slalom course during competition',
+    },
+  },
+  {
+    // Прежний файл заменён на фото, присланное Заказчиком (папка
+    // «obshestvennoedeyatelnost» к замечанию от 19.08.2026, п. 16).
+    file: 'value-tourism-2.jpg',
+    alt: {
+      ru: 'Курортный посёлок Шымбулак с воздуха в сумерках',
+      kk: 'Шымбұлақ курорттық посёлкасының ымырт кезіндегі әуеден көрінісі',
+      en: 'The Shymbulak resort village from above at dusk',
     },
   },
   {
@@ -359,9 +439,12 @@ async function upsertPage(input: {
   path: string;
   title: T;
   lead?: T;
+  /** Файл обложки страницы (Media.file) — «главный экран» сверху, 21:9. */
+  cover?: string;
   blocks: BlocksFor;
 }): Promise<void> {
   const existing = await prisma.page.findUnique({ where: { path: input.path } });
+  const coverId = input.cover ? mid(input.cover) : null;
 
   const translations = LOCALES.map((locale) => ({
     locale,
@@ -377,6 +460,7 @@ async function upsertPage(input: {
         where: { id: existing.id },
         data: {
           status: PublishStatus.PUBLISHED,
+          coverId,
           translations: { create: translations },
         },
       }),
@@ -386,6 +470,7 @@ async function upsertPage(input: {
       data: {
         path: input.path,
         status: PublishStatus.PUBLISHED,
+        coverId,
         translations: { create: translations },
       },
     });
@@ -400,13 +485,18 @@ async function seedHome(): Promise<void> {
   // набор (в том числе кнопки в герое) им противоречит.
   await prisma.homeSection.deleteMany({});
 
-  // Кадры баннера (замечания Заказчика от 19.08.2026 п. 1 и от 20.08.2026):
-  // блёклую спутниковую панораму (hero-range.jpg, подпись «Issyk-Kul») и
-  // гондолу с фирменной надписью французского курорта «friendlyMenuires» на
-  // кабине убрали. Вместо них — два подтверждённо реальных кадра настоящей
-  // канатной дороги Медео — Шымбулак (лицензия CC BY-SA, источник указан в
-  // Media.source каждого файла), зима чередуется с летом, кабины чистые.
-  const heroFrames = ['hero-cablecar-winter.jpg', 'hero-cablecar-summer.jpg'];
+  // Кадры баннера (замечания Заказчика от 19.08.2026 п. 1, от 20.08.2026
+  // и присланная Заказчиком папка «banner»): блёклую спутниковую панораму
+  // и гондолу с фирменной надписью французского курорта убрали ранее.
+  // Зимний кадр Медео — Шымбулак оставлен по прямому указанию Заказчика,
+  // прежний стоковый летний кадр заменён тремя новыми присланными фото —
+  // зима чередуется с летом и видом на каток Медео.
+  const heroFrames = [
+    'hero-cablecar-winter.jpg',
+    'hero-shymbulak-summer.jpg',
+    'hero-shymbulak-winter.jpg',
+    'hero-medeo-katok.jpg',
+  ];
 
   await prisma.homeSection.create({
     data: {
@@ -579,6 +669,9 @@ async function seedProjectPage(): Promise<void> {
     path: 'project',
     title: PROJECT_TITLE,
     lead: PROJECT_LEAD,
+    // Обложка «главного экрана» раздела, присланная Заказчиком (папка
+    // «АлматинскийГорныйКласстер» к замечанию от 19.08.2026, п. 16).
+    cover: 'project-cover-2.jpg',
     blocks: (locale) => [
       { id: bid(), type: 'text', width: 'wide', html: PROJECT_INTRO_HTML[locale] },
       {
@@ -1130,7 +1223,13 @@ async function seedAnticorruptionPage(): Promise<void> {
 
   const documentIds: string[] = [];
   for (const doc of ANTICOR_DOCS) {
-    documentIds.push(await upsertDocumentFile(prisma, category.id, doc));
+    try {
+      documentIds.push(await upsertDocumentFile(prisma, category.id, doc));
+    } catch (e) {
+      // Файл ещё не прислан Заказчиком — пропускаем, чтобы не блокировать
+      // остальной сид (страницы новостей, галереи, приватность и контакты).
+      console.warn(`  ⚠ пропущен документ «${doc.file}»: файл не найден в seed-assets/documents`);
+    }
   }
 
   await upsertPage({
@@ -1340,13 +1439,16 @@ const ALBUMS: Array<{ slug: string; order: number; title: T; description: T; fil
       // hero-gondola.jpg исключена из публичной галереи (замечание Заказчика
       // от 19.08.2026, п. 1): на кабине — фирменная надпись французского
       // курорта «friendlyMenuires», к Алматинскому горному кластеру
-      // отношения не имеющая.
+      // отношения не имеющая. hero-cablecar-summer.jpg заменена присланными
+      // Заказчиком кадрами баннера (см. seedHome).
       'hero-cablecar-winter.jpg',
-      'hero-cablecar-summer.jpg',
+      'hero-shymbulak-summer.jpg',
+      'hero-shymbulak-winter.jpg',
+      'hero-medeo-katok.jpg',
       'hero-range.jpg',
       'value-health.jpg',
       'value-sport.jpg',
-      'value-tourism.jpg',
+      'value-tourism-2.jpg',
       'value-eco.jpg',
       'value-economy.jpg',
     ],
@@ -1399,63 +1501,56 @@ async function seedAlbums(): Promise<void> {
 /* ---------------------------------------------------------------- новости */
 
 /**
- * Новости, названные в замечании п. 3 («Атамекен (релиз)», «Общественные
- * слушания»), создаются ЧЕРНОВИКАМИ.
- *
- * Заголовки и структура готовы, тело — за Заказчиком: содержания пресс-релиза
- * и итогов слушаний в замечаниях нет, а придумывать факты для официального
- * сайта оператора городского проекта нельзя. Черновик виден в админке
- * («Медиацентр → Новости»), публикуется одной кнопкой после вычитки.
+ * Пять пресс-релизов, присланных Заказчиком по замечанию от 19.08.2026,
+ * п. 6 («В блоке новостей разместить релизы по дате»): «Атамекен»,
+ * «Иле-Алатау», «Гражданский альянс», «Общественный совет и маслихат»,
+ * «ОМ релиз» (общественные слушания). Публикуются сразу, с датой
+ * фактического мероприятия — контент и порядок см. content/texts-news.ts.
  */
-const NEWS_DRAFTS: Array<{ slug: string; title: T }> = [
-  {
-    slug: 'atameken-release',
-    title: {
-      ru: 'Атамекен: пресс-релиз',
-      kk: 'Атамекен: баспасөз хабарламасы',
-      en: 'Atameken: press release',
-    },
-  },
-  {
-    slug: 'obshchestvennye-slushaniya',
-    title: {
-      ru: 'Общественные слушания по проекту Алматинского горного кластера',
-      kk: 'Алматы тау кластері жобасы бойынша қоғамдық тыңдаулар',
-      en: 'Public hearings on the Almaty Mountain Cluster project',
-    },
-  },
-];
+async function seedNews(): Promise<void> {
+  for (const article of NEWS_ARTICLES) {
+    const translations = LOCALES.map((locale) => ({
+      locale,
+      title: article.title[locale],
+      excerpt: article.excerpt[locale],
+      blocks: article.parts.map((part) =>
+        part.kind === 'quote'
+          ? {
+              id: bid(),
+              type: 'quote' as const,
+              text: part.text[locale],
+              author: part.author[locale],
+              role: part.role[locale],
+            }
+          : { id: bid(), type: 'text' as const, width: 'wide' as const, html: part.html[locale] },
+      ) as never,
+    }));
 
-const DRAFT_PLACEHOLDER: T = {
-  ru: '<p>Текст материала заполняется Заказчиком. После вычитки новость публикуется из раздела «Медиацентр → Новости».</p>',
-  kk: '<p>Материал мәтінін Тапсырыс беруші толтырады. Тексерілгеннен кейін жаңалық «Медиаорталық → Жаңалықтар» бөлімінен жарияланады.</p>',
-  en: '<p>The body of this item is to be provided by the client. Once reviewed, it is published from Media Centre → News.</p>',
-};
-
-async function seedNewsDrafts(): Promise<void> {
-  for (const item of NEWS_DRAFTS) {
-    const existing = await prisma.news.findUnique({ where: { slug: item.slug } });
-    if (existing) continue;
-
-    await prisma.news.create({
-      data: {
-        slug: item.slug,
-        status: PublishStatus.DRAFT,
-        publishedAt: null,
-        translations: {
-          create: LOCALES.map((locale) => ({
-            locale,
-            title: item.title[locale],
-            excerpt: null,
-            blocks: [
-              { id: 'draft', type: 'text', width: 'normal', html: DRAFT_PLACEHOLDER[locale] },
-            ] as never,
-          })),
+    const existing = await prisma.news.findUnique({ where: { slug: article.slug } });
+    if (existing) {
+      await prisma.$transaction([
+        prisma.newsTranslation.deleteMany({ where: { newsId: existing.id } }),
+        prisma.news.update({
+          where: { id: existing.id },
+          data: {
+            status: PublishStatus.PUBLISHED,
+            publishedAt: new Date(article.publishedAt),
+            translations: { create: translations },
+          },
+        }),
+      ]);
+    } else {
+      await prisma.news.create({
+        data: {
+          slug: article.slug,
+          status: PublishStatus.PUBLISHED,
+          publishedAt: new Date(article.publishedAt),
+          translations: { create: translations },
         },
-      },
-    });
+      });
+    }
   }
-  console.log('✓ Новости «Атамекен» и «Общественные слушания» созданы черновиками — требуется текст Заказчика');
+  console.log(`✓ Новости: ${NEWS_ARTICLES.length} релизов опубликовано (по дате мероприятия)`);
 }
 
 /* ------------------------------------------------------------------- меню */
@@ -1506,7 +1601,7 @@ async function main(): Promise<void> {
   await seedPrivacyPage();
   await seedContacts();
   await seedAlbums();
-  await seedNewsDrafts();
+  await seedNews();
   await renameProjectMenu();
   await reindexSearch();
   console.log('\nГотово. Кэш публичного API сбрасывается автоматически по TTL (до 5 минут).');

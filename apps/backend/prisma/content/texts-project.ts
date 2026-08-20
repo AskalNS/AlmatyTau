@@ -262,7 +262,7 @@ export const VALUE_SECTIONS: ValueSection[] = [
   {
     anchor: 'bezopasnost',
     icon: 'safety',
-    asset: 'hero-range.jpg',
+    asset: 'value-safety.jpg',
     title: { ru: 'Безопасность посетителей', kk: 'Келушілердің қауіпсіздігі', en: 'Visitor safety' },
     html: {
       ru:
@@ -351,7 +351,7 @@ export const VALUE_SECTIONS: ValueSection[] = [
   {
     anchor: 'socialnaya-orientirovannost',
     icon: 'inclusion',
-    asset: 'value-social.jpg',
+    asset: 'value-social-2.jpg',
     title: {
       ru: 'Социальная ориентированность',
       kk: 'Әлеуметтік бағыттылық',
@@ -372,7 +372,7 @@ export const VALUE_SECTIONS: ValueSection[] = [
   {
     anchor: 'turizm',
     icon: 'tourism',
-    asset: 'value-tourism.jpg',
+    asset: 'value-tourism-2.jpg',
     title: {
       ru: 'Новые возможности для развития туризма',
       kk: 'Туризмді дамытудың жаңа мүмкіндіктері',
@@ -410,6 +410,7 @@ export const VALUE_SECTIONS: ValueSection[] = [
   {
     anchor: 'chelovecheskiy-kapital',
     icon: 'education',
+    asset: 'value-education.jpg',
     title: {
       ru: 'Развитие человеческого капитала',
       kk: 'Адами капиталды дамыту',
@@ -456,7 +457,7 @@ export const VALUE_SECTIONS: ValueSection[] = [
   {
     anchor: 'sport',
     icon: 'sport',
-    asset: 'value-sport.jpg',
+    asset: 'value-sport-2.jpg',
     title: {
       ru: 'Спортивная инфраструктура мирового уровня',
       kk: 'Әлемдік деңгейдегі спорт инфрақұрылымы',

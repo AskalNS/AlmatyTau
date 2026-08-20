@@ -208,15 +208,11 @@ export const NUMBERS_TITLE: T = {
 
 export const NUMBERS: Array<{ value: string; suffix?: string; label: T }> = [
   {
-    value: '32',
+    value: '30',
     label: { ru: 'Канатные дороги', kk: 'Аспалы жолдар', en: 'Cable cars' },
   },
   {
-    value: '104',
-    label: { ru: 'Лыжные трассы', kk: 'Шаңғы трассалары', en: 'Ski runs' },
-  },
-  {
-    value: '90',
+    value: '151',
     suffix: 'км',
     label: { ru: 'Протяжённость трасс', kk: 'Трассалардың ұзындығы', en: 'Total length of runs' },
   },
@@ -226,6 +222,14 @@ export const NUMBERS: Array<{ value: string; suffix?: string; label: T }> = [
       ru: 'Пропускная способность, чел./день',
       kk: 'Өткізу қабілеті, адам/тәулігіне',
       en: 'Capacity, people per day',
+    },
+  },
+  {
+    value: '10 000',
+    label: {
+      ru: 'Новых рабочих мест',
+      kk: 'Жаңа жұмыс орны',
+      en: 'New jobs',
     },
   },
   {
