@@ -5,5 +5,6 @@ import { PublicDocumentsController, AdminDocumentsController } from './documents
 @Module({
   providers: [DocumentsService],
   controllers: [PublicDocumentsController, AdminDocumentsController],
+  exports: [DocumentsService],
 })
 export class DocumentsModule {}

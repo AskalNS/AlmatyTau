@@ -7,7 +7,7 @@ import {
   CreateBucketCommand,
   HeadBucketCommand,
 } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import type { Readable } from 'node:stream';
 import { env } from '../../config/env';
 
 /**
@@ -85,14 +85,20 @@ export class StorageService implements OnModuleInit {
   }
 
   /**
-   * Подписанная ссылка на приватный файл (документы). Срок жизни ограничен,
-   * поэтому её нельзя просто расшарить навсегда.
+   * Содержимое приватного файла (документы) — поток, а не ссылка.
+   *
+   * Подписанные ссылки на MinIO указывают на внутренний хост (S3_ENDPOINT,
+   * `minio:9000` в докер-сети) и браузер до него достучаться не может;
+   * публичного домена/эндпоинта у private/ нет и не планируется — файлы не
+   * должны быть доступны без прохождения через API. Поэтому бэкенд читает
+   * объект сам и отдаёт его как обычный HTTP-ответ (см. DocumentsController).
    */
-  signedUrl(key: string, expiresInSeconds = 300): Promise<string> {
-    return getSignedUrl(
-      this.client,
-      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
-      { expiresIn: expiresInSeconds },
-    );
+  async getObject(key: string): Promise<{ body: Readable; contentType?: string; contentLength?: number }> {
+    const res = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+    return {
+      body: res.Body as Readable,
+      contentType: res.ContentType,
+      contentLength: res.ContentLength,
+    };
   }
 }

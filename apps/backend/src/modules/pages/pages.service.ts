@@ -6,10 +6,12 @@ import {
   type Locale,
   blocksSchema,
   collectMediaIds,
+  collectDocumentIds,
 } from '@atm/contracts';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MediaMapper } from '../media/media.mapper';
+import { DocumentsService } from '../documents/documents.service';
 import { SanitizerService } from '../../common/sanitizer.service';
 import { SearchIndexerService } from '../search/search-indexer.service';
 import { CacheService } from '../../redis/cache.service';
@@ -31,6 +33,7 @@ export class PagesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly media: MediaMapper,
+    private readonly documents: DocumentsService,
     private readonly sanitizer: SanitizerService,
     private readonly indexer: SearchIndexerService,
     private readonly cache: CacheService,
@@ -129,6 +132,7 @@ export class PagesService {
         cover: row.cover ? this.media.toDto(row.cover) : null,
         blocks,
         media: await this.media.mapForBlocks(this.prisma.media, collectMediaIds(blocks)),
+        documents: await this.documents.mapForBlocks(collectDocumentIds(blocks), locale),
         seo: buildSeo(
           { title: tr.title, seoTitle: tr.seoTitle, seoDescription: tr.seoDescription, seoNoindex: tr.seoNoindex },
           availableLocales(row.translations),

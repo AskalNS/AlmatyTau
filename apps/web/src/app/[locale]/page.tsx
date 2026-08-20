@@ -73,21 +73,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           );
         }
 
-        if (section.type === 'partners' && home.links.length > 0) {
-          return (
-            <section key={section.id} className="section">
-              <div className="wrap">
-                <div className="eyebrow">{section.title}</div>
-                <div className={styles.partners}>
-                  {home.links.map((l) => (
-                    <a key={l.id} href={l.url} target="_blank" rel="noopener noreferrer" className={styles.partner}>
-                      {l.logo ? <SiteImage media={l.logo} locale={loc} /> : <span>{l.title}</span>}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </section>
-          );
+        // Раздел «Партнёры и госресурсы» убран с главной по замечанию
+        // Заказчика от 19.08.2026 (п. 7).
+        if (section.type === 'partners') {
+          return null;
         }
 
         // Все прочие секции (about, stats, map, directions) — блочный контент.
@@ -102,10 +91,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               )}
               {section.blocks.length > 0 && (
                 <div className={styles.sectionBody}>
-                  <BlockRenderer blocks={section.blocks} locale={loc} mediaMap={home.media} />
+                  <BlockRenderer blocks={section.blocks} locale={loc} mediaMap={home.media} documentsMap={home.documents} />
                 </div>
               )}
-              {section.href && (
+              {/* У карты кнопку «Подробнее» убрали по замечанию Заказчика
+                  от 19.08.2026 (п. 5) — карта самодостаточна. */}
+              {section.type !== 'map' && section.href && (
                 <Link className="btn btn-secondary" href={buildHref(loc, section.href)} style={{ marginTop: 24 }}>
                   {t.readMore} →
                 </Link>

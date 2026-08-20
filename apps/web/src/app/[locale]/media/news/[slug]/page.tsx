@@ -76,7 +76,7 @@ export default async function NewsDetailPage({
       )}
 
       <div className={styles.articleBody}>
-        <BlockRenderer blocks={news.blocks} locale={loc} mediaMap={news.media} />
+        <BlockRenderer blocks={news.blocks} locale={loc} mediaMap={news.media} documentsMap={news.documents} />
       </div>
 
       {news.related.length > 0 && (

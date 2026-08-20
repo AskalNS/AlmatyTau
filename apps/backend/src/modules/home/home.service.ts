@@ -6,6 +6,7 @@ import {
   type Locale,
   blocksSchema,
   collectMediaIds,
+  collectDocumentIds,
 } from '@atm/contracts';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -14,6 +15,7 @@ import { CacheService } from '../../redis/cache.service';
 import { NewsService } from '../news/news.service';
 import { LinksService } from '../links/links.service';
 import { SettingsService } from '../settings/settings.service';
+import { DocumentsService } from '../documents/documents.service';
 import { pickTranslation } from '../../common/i18n.util';
 
 const INCLUDE = {
@@ -39,6 +41,7 @@ export class HomeService {
     private readonly news: NewsService,
     private readonly links: LinksService,
     private readonly settings: SettingsService,
+    private readonly documents: DocumentsService,
   ) {}
 
   async publicHome(locale: Locale): Promise<PublicHome> {
@@ -59,6 +62,10 @@ export class HomeService {
       const media = await this.media.mapForBlocks(
         this.prisma.media,
         collectMediaIds(sections.flatMap((s) => s.blocks)),
+      );
+      const documents = await this.documents.mapForBlocks(
+        collectDocumentIds(sections.flatMap((s) => s.blocks)),
+        locale,
       );
 
       // Кадры анимированного баннера — из блока «Галерея» секции «Главный
@@ -89,6 +96,7 @@ export class HomeService {
         news: newsList.items,
         links: [...links, ...govLinks],
         media,
+        documents,
         seo: {
           title: heroTr?.title ?? 'ТОО «Almaty Tau Management»',
           description: heroTr?.subtitle ?? null,

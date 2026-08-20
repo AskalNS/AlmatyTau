@@ -1,4 +1,4 @@
-import type { Block, Blocks, Locale, Media } from '@atm/contracts';
+import type { Block, Blocks, Locale, Media, PublicDocument } from '@atm/contracts';
 import { SiteImage } from '../SiteMedia';
 import { BlockIcon } from './BlockIcon';
 import { SectionsBlock } from './SectionsBlock';
@@ -21,15 +21,17 @@ export function BlockRenderer({
   blocks,
   locale,
   mediaMap = {},
+  documentsMap = {},
 }: {
   blocks: Blocks;
   locale: Locale;
   mediaMap?: Record<string, Media>;
+  documentsMap?: Record<string, PublicDocument>;
 }) {
   return (
     <div className={styles.flow}>
       {blocks.map((block) => (
-        <BlockView key={block.id} block={block} locale={locale} mediaMap={mediaMap} />
+        <BlockView key={block.id} block={block} locale={locale} mediaMap={mediaMap} documentsMap={documentsMap} />
       ))}
     </div>
   );
@@ -39,10 +41,12 @@ function BlockView({
   block,
   locale,
   mediaMap,
+  documentsMap,
 }: {
   block: Block;
   locale: Locale;
   mediaMap: Record<string, Media>;
+  documentsMap: Record<string, PublicDocument>;
 }) {
   switch (block.type) {
     case 'text':
@@ -109,11 +113,15 @@ function BlockView({
     case 'file':
       return (
         <ul className={styles.files}>
-          {block.documentIds.map((id) => (
-            <li key={id}>
-              <a href={`/api/public/documents/${id}/download`}>{block.title || 'Документ'}</a>
-            </li>
-          ))}
+          {block.title && <p className={styles.filesTitle}>{block.title}</p>}
+          {block.documentIds.map((id) => {
+            const doc = documentsMap[id];
+            return (
+              <li key={id}>
+                <a href={`/api/public/documents/${id}/download`}>{doc?.title || doc?.fileName || 'Документ'}</a>
+              </li>
+            );
+          })}
         </ul>
       );
 

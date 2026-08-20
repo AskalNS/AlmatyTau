@@ -39,6 +39,8 @@ const DICT = {
     feedbackConsent: 'Дербес деректерді өңдеуге келісемін',
     feedbackSent: 'Хабарламаңыз жіберілді. Рахмет!',
     requiredField: 'Міндетті өріс',
+    sitemap: 'Сайт картасы',
+    screenReader: 'Соқырларға арналған нұсқа',
   },
   ru: {
     home: 'Главная',
@@ -72,6 +74,8 @@ const DICT = {
     feedbackConsent: 'Согласен на обработку персональных данных',
     feedbackSent: 'Ваше сообщение отправлено. Спасибо!',
     requiredField: 'Обязательное поле',
+    sitemap: 'Карта сайта',
+    screenReader: 'Версия для слепых',
   },
   en: {
     home: 'Home',
@@ -105,6 +109,8 @@ const DICT = {
     feedbackConsent: 'I consent to the processing of personal data',
     feedbackSent: 'Your message has been sent. Thank you!',
     requiredField: 'Required field',
+    sitemap: 'Sitemap',
+    screenReader: 'Screen reader version',
   },
 } as const;
 

@@ -164,11 +164,32 @@ export class DocumentsService {
     });
   }
 
-  /** Выдаёт подписанную ссылку на скачивание приватного файла. */
-  async downloadUrl(id: string): Promise<string> {
+  /**
+   * Словарь документов по id для блока `file` в блочном контенте.
+   *
+   * Тот же приём, что MediaMapper.mapForBlocks: блок хранит только
+   * идентификаторы, отсутствующий/неопубликованный документ просто не
+   * попадает в словарь — фронт покажет остальные, страница не падает.
+   */
+  async mapForBlocks(ids: string[], locale: Locale): Promise<Record<string, PublicDocument>> {
+    if (ids.length === 0) return {};
+    const rows = await this.prisma.document.findMany({
+      where: { id: { in: ids }, status: 'PUBLISHED' },
+      include: INCLUDE,
+    });
+    const result: Record<string, PublicDocument> = {};
+    for (const row of rows) {
+      const dto = this.toPublic(row, locale);
+      if (dto) result[row.id] = dto;
+    }
+    return result;
+  }
+
+  /** Данные для отдачи файла напрямую с бэкенда (см. DocumentsController.download). */
+  async getDownloadInfo(id: string): Promise<{ storageKey: string; fileName: string; fileMime: string }> {
     const row = await this.prisma.document.findUnique({ where: { id }, include: { file: true } });
     if (!row || row.status !== 'PUBLISHED') throw new NotFoundException('Документ не найден');
-    return this.storage.signedUrl(row.file.storageKey, 300);
+    return { storageKey: row.file.storageKey, fileName: row.fileName, fileMime: row.fileMime };
   }
 
   private async afterWrite(row: DocRow, action: 'CREATE' | 'UPDATE', actor: AuditContext) {

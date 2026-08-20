@@ -17,6 +17,7 @@
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
     "content:seed": "tsx prisma/seed-content.ts",
+    "reindex:search": "tsx prisma/reindex-search.ts",
     "prisma:studio": "prisma studio"
   },
   "prisma": {

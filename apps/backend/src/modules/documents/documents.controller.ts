@@ -10,6 +10,7 @@ import {
 import { zodBody } from '../../common/zod-validation.pipe';
 import { parseLocale } from '../../common/i18n.util';
 import { DocumentsService } from './documents.service';
+import { StorageService } from '../media/storage.service';
 import { Public } from '../auth/decorators/public.decorator';
 import { CurrentUser, type AuthUser } from '../auth/decorators/current-user.decorator';
 import { AuditService } from '../audit/audit.service';
@@ -17,7 +18,10 @@ import { AuditService } from '../audit/audit.service';
 @ApiTags('Документы (публичное)')
 @Controller('public/documents')
 export class PublicDocumentsController {
-  constructor(private readonly docs: DocumentsService) {}
+  constructor(
+    private readonly docs: DocumentsService,
+    private readonly storage: StorageService,
+  ) {}
 
   @Public()
   @Get('categories')
@@ -35,11 +39,22 @@ export class PublicDocumentsController {
 
   @Public()
   @Get(':id/download')
-  @ApiOperation({ summary: 'Скачать документ (редирект на подписанную ссылку)' })
+  @ApiOperation({ summary: 'Скачать документ' })
   async download(@Param('id') id: string, @Res() res: Response) {
-    const url = await this.docs.downloadUrl(id);
-    // 302 на короткоживущую подписанную ссылку: сам файл лежит в private/.
-    res.redirect(302, url);
+    const info = await this.docs.getDownloadInfo(id);
+    const file = await this.storage.getObject(info.storageKey);
+
+    // Файл отдаётся с бэкенда, а не редиректом на MinIO: у private/ нет
+    // публичного адреса (сервер доступен только внутри докер-сети), и ссылка
+    // не должна уводить посетителя со страницы сайта — только запускать
+    // скачивание по клику (см. Content-Disposition: attachment ниже).
+    res.setHeader('Content-Type', file.contentType || info.fileMime);
+    if (file.contentLength) res.setHeader('Content-Length', file.contentLength);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename*=UTF-8''${encodeURIComponent(info.fileName)}`,
+    );
+    file.body.pipe(res);
   }
 }
 

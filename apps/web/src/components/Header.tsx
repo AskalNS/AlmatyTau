@@ -40,6 +40,17 @@ export function Header({
               от 28.07.2026 он остаётся только в подвале. */}
           <span className={styles.spacer} />
           <A11yLink className={styles.a11yLink} label={t.a11y} />
+          {/* Версия для незрячих (замечание Заказчика от 19.08.2026, п. 9):
+              внешний экранный диктор, по примеру screenreader.tilqazyna.kz —
+              свой экранный диктор сайт не реализует. */}
+          <a
+            className={styles.a11yLink}
+            href="https://screenreader.tilqazyna.kz/#download"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ◉ {t.screenReader}
+          </a>
           <Link className={styles.searchLink} href={buildHref(locale, ROUTES.search)}>
             ⌕ {t.search}
           </Link>
@@ -49,11 +60,10 @@ export function Header({
 
       <div className={styles.main}>
         <div className={`wrap ${styles.mainInner}`}>
+          {/* Подпись «Алматинский горный кластер» рядом с логотипом убрана
+              по замечанию Заказчика от 19.08.2026 (п. 2). */}
           <Link href={buildHref(locale, ROUTES.home)} className={styles.logo} aria-label={settings.organizationName}>
             <LogoMark height={42} />
-            <span className={styles.logoName}>
-              {locale === 'kk' ? 'Алматы тау кластері' : locale === 'en' ? 'Almaty Mountain Cluster' : 'Алматинский горный кластер'}
-            </span>
           </Link>
 
           <nav className={styles.nav} aria-label="Основная навигация">

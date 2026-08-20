@@ -140,6 +140,9 @@ export const PHASES_TITLE: T = {
 
 export const PHASES: Array<{ period: T; title: T; text: T; done: boolean }> = [
   {
+    // Очерёдность приведена в соответствие с утверждённой (замечание
+    // Заказчика от 19.08.2026): Шымбулак и Кимасар — этап 1 (2026),
+    // Бутаковка и Oi-Qaragai — этап 2 (2027–2028), Пионер — этап 3 (2030–2031).
     period: { ru: 'Фаза 1', kk: '1-кезең', en: 'Phase 1' },
     title: { ru: 'Шымбулак', kk: 'Шымбұлақ', en: 'Shymbulak' },
     text: {
@@ -151,31 +154,41 @@ export const PHASES: Array<{ period: T; title: T; text: T; done: boolean }> = [
   },
   {
     period: { ru: 'Фаза 1', kk: '1-кезең', en: 'Phase 1' },
-    title: { ru: 'Бутаковка и Кимасар', kk: 'Бұтақты және Кімасар', en: 'Butakovka and Kimasar' },
+    title: { ru: 'Кимасар', kk: 'Кімасар', en: 'Kimasar' },
     text: {
-      ru: 'Базовая массовая зона и связующее звено системы — первый этап нового строительства.',
-      kk: 'Негізгі көпшілік аймағы және жүйенің байланыстырушы буыны — жаңа құрылыстың бірінші кезеңі.',
-      en: 'The core mass-market zone and the connecting link — the first stage of new construction.',
+      ru: 'Связующее звено системы — новое строительство канатных дорог и трасс.',
+      kk: 'Жүйенің байланыстырушы буыны — аспалы жолдар мен трассалардың жаңа құрылысы.',
+      en: 'The connecting link of the system — new cable cars and ski runs.',
     },
     done: false,
   },
   {
     period: { ru: 'Фаза 2', kk: '2-кезең', en: 'Phase 2' },
-    title: { ru: 'Пионер', kk: 'Пионер', en: 'Pioneer' },
+    title: { ru: 'Бутаковка', kk: 'Бұтақты', en: 'Butakovka' },
     text: {
-      ru: 'Спортивно-тренировочная и инклюзивная зона.',
-      kk: 'Спорттық-жаттығу және инклюзивті аймақ.',
-      en: 'The sports training and inclusive zone.',
+      ru: 'Базовая массовая зона катания — второй этап нового строительства.',
+      kk: 'Негізгі көпшілік сырғанау аймағы — жаңа құрылыстың екінші кезеңі.',
+      en: 'The core mass-market ski zone — the second stage of new construction.',
     },
     done: false,
   },
   {
-    period: { ru: 'Фаза 2А', kk: '2А кезең', en: 'Phase 2A' },
+    period: { ru: 'Фаза 2', kk: '2-кезең', en: 'Phase 2' },
     title: { ru: 'Oi-Qaragai', kk: 'Oi-Qaragai', en: 'Oi-Qaragai' },
     text: {
       ru: 'Семейный и природно-рекреационный кластер, замыкающий систему курортов.',
       kk: 'Курорттар жүйесін тұйықтайтын отбасылық және табиғи-рекреациялық кластер.',
       en: 'The family and nature-recreation cluster that closes the resort system.',
+    },
+    done: false,
+  },
+  {
+    period: { ru: 'Фаза 3', kk: '3-кезең', en: 'Phase 3' },
+    title: { ru: 'Пионер', kk: 'Пионер', en: 'Pioneer' },
+    text: {
+      ru: 'Спортивно-тренировочная и инклюзивная зона.',
+      kk: 'Спорттық-жаттығу және инклюзивті аймақ.',
+      en: 'The sports training and inclusive zone.',
     },
     done: false,
   },

@@ -675,6 +675,21 @@ export function collectMediaIds(blocks: Blocks): string[] {
   return [...ids];
 }
 
+/**
+ * Идентификаторы документов, на которые ссылается блок `file`.
+ *
+ * Тот же приём, что и с collectMediaIds: блок хранит только id, страница
+ * обязана приложить словарь документов целиком — иначе список в блоке
+ * рисуется без названий файлов.
+ */
+export function collectDocumentIds(blocks: Blocks): string[] {
+  const ids = new Set<string>();
+  for (const b of blocks) {
+    if (b.type === 'file') b.documentIds.forEach((id) => ids.add(id));
+  }
+  return [...ids];
+}
+
 /* ------------------------------------------------------------- санитайзер */
 
 /**

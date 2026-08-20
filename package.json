@@ -24,6 +24,7 @@
     "db:migrate:new": "docker compose exec backend pnpm run prisma:migrate:dev",
     "db:seed": "docker compose exec backend pnpm run prisma:seed",
     "db:seed:content": "docker compose exec backend pnpm run content:seed",
+    "db:reindex": "docker compose exec backend pnpm run reindex:search",
     "db:studio": "docker compose run --rm -p 127.0.0.1:5555:5555 backend pnpm run prisma:studio",
     "lint": "pnpm --recursive lint",
     "typecheck": "pnpm --recursive typecheck",

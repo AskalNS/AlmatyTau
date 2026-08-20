@@ -76,14 +76,15 @@ async function seedSettings() {
             organizationName: 'ТОО «Almaty Tau Management»',
             address: 'г. Алматы, ул. Байзакова, 303, 2 этаж',
             workingHours: 'Пн–Пт, 09:00–18:00',
-            footerText: 'Официальный сайт оператора проекта «Алматинский горный кластер».',
+            // Кавычки убраны по замечанию Заказчика от 19.08.2026 (п. 12).
+            footerText: 'Официальный сайт оператора проекта Алматинский горный кластер.',
           },
           {
             locale: Locale.kk,
             organizationName: '«Almaty Tau Management» ЖШС',
             address: 'Алматы қаласы, Байзақов көшесі, 303, 2-қабат',
             workingHours: 'Дс–Жм, 09:00–18:00',
-            footerText: '«Алматы тау кластері» жобасы операторының ресми сайты.',
+            footerText: 'Алматы тау кластері жобасы операторының ресми сайты.',
           },
           {
             locale: Locale.en,
@@ -182,7 +183,10 @@ async function seedMenu() {
   const main: Node[] = [
     { href: '', titles: { kk: 'Басты бет', ru: 'Главная', en: 'Home' } },
     {
-      href: 'company',
+      // Раздел не имеет собственной обзорной страницы с контентом — пункт
+      // меню ведёт на главную (замечание Заказчика от 19.08.2026, п. 10),
+      // раскрывается дочерними пунктами через ховер/фокус.
+      href: '',
       titles: { kk: 'Almaty Tau Management', ru: 'Almaty Tau Management', en: 'Almaty Tau Management' },
       children: [
         { href: 'company/about', titles: { kk: 'Компания туралы', ru: 'О компании', en: 'About' } },
@@ -308,7 +312,8 @@ async function seedHomeSections() {
     { type: 'stats', titles: { ru: 'Проект в цифрах', kk: 'Сандармен', en: 'By the numbers' } },
     { type: 'map', titles: { ru: 'Интерактивная карта кластера', kk: 'Кластердің картасы', en: 'Cluster map' } },
     { type: 'news', titles: { ru: 'Последние новости', kk: 'Соңғы жаңалықтар', en: 'Latest news' }, href: 'media/news' },
-    { type: 'partners', titles: { ru: 'Партнёры и госресурсы', kk: 'Серіктестер', en: 'Partners' } },
+    // Раздел «Партнёры и госресурсы» убран по замечанию Заказчика от
+    // 19.08.2026 (п. 7).
   ];
 
   let order = 1;

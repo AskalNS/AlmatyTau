@@ -29,6 +29,33 @@ export const publicSeoSchema = z.object({
 });
 export type PublicSeo = z.infer<typeof publicSeoSchema>;
 
+/* --------------------------------------------------------------- документы */
+
+export const publicDocumentSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().nullable(),
+  /** Ссылка на скачивание. Стабильна между редакциями файла. */
+  url: z.string(),
+  fileName: z.string(),
+  fileSize: z.number().int(),
+  fileMime: z.string(),
+  documentDate: isoDateSchema.nullable(),
+  revision: z.number().int(),
+  category: z.object({ id: z.string(), slug: slugSchema, title: z.string() }).nullable(),
+});
+export type PublicDocument = z.infer<typeof publicDocumentSchema>;
+
+/**
+ * Документы, на которые ссылается блок `file`, — словарь по id.
+ *
+ * Тот же приём, что и с blockMediaMapSchema: блок хранит только
+ * идентификаторы, а название/ссылку на скачивание страница прикладывает
+ * целиком. Без словаря блок `file` не может показать название документа.
+ */
+export const blockDocumentMapSchema = z.record(z.string(), publicDocumentSchema);
+export type BlockDocumentMap = z.infer<typeof blockDocumentMapSchema>;
+
 /* ------------------------------------------------------------------ новости */
 
 export const publicNewsCardSchema = z.object({
@@ -45,6 +72,7 @@ export type PublicNewsCard = z.infer<typeof publicNewsCardSchema>;
 export const publicNewsSchema = publicNewsCardSchema.extend({
   blocks: blocksSchema,
   media: z.record(z.string(), mediaSchema),
+  documents: blockDocumentMapSchema,
   seo: publicSeoSchema,
   related: z.array(publicNewsCardSchema),
 });
@@ -70,6 +98,7 @@ export const publicPageSchema = z.object({
   cover: mediaSchema.nullable(),
   blocks: blocksSchema,
   media: blockMediaMapSchema,
+  documents: blockDocumentMapSchema,
   seo: publicSeoSchema,
   updatedAt: isoDateSchema,
 });
@@ -87,23 +116,6 @@ export const publicPersonSchema = z.object({
   photo: mediaSchema.nullable(),
 });
 export type PublicPerson = z.infer<typeof publicPersonSchema>;
-
-/* --------------------------------------------------------------- документы */
-
-export const publicDocumentSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  description: z.string().nullable(),
-  /** Ссылка на скачивание. Стабильна между редакциями файла. */
-  url: z.string(),
-  fileName: z.string(),
-  fileSize: z.number().int(),
-  fileMime: z.string(),
-  documentDate: isoDateSchema.nullable(),
-  revision: z.number().int(),
-  category: z.object({ id: z.string(), slug: slugSchema, title: z.string() }).nullable(),
-});
-export type PublicDocument = z.infer<typeof publicDocumentSchema>;
 
 /* ---------------------------------------------------------------- вакансии */
 
@@ -249,6 +261,7 @@ export const publicHomeSchema = z.object({
   links: z.array(publicLinkSchema),
   /** Медиа, на которые ссылаются блоки секций. */
   media: blockMediaMapSchema,
+  documents: blockDocumentMapSchema,
   seo: publicSeoSchema,
 });
 export type PublicHome = z.infer<typeof publicHomeSchema>;
