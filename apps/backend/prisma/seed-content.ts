@@ -134,14 +134,6 @@ const IMAGES: Array<{ file: string; alt: T }> = [
     },
   },
   {
-    file: 'hero-gondola.jpg',
-    alt: {
-      ru: 'Гондола канатной дороги над горным хребтом',
-      kk: 'Тау жотасының үстіндегі аспалы жол гондоласы',
-      en: 'A gondola lift above a mountain ridge',
-    },
-  },
-  {
     file: 'hero-range.jpg',
     alt: {
       ru: 'Панорама заснеженных хребтов Заилийского Алатау',
@@ -392,7 +384,12 @@ async function seedHome(): Promise<void> {
   // набор (в том числе кнопки в герое) им противоречит.
   await prisma.homeSection.deleteMany({});
 
-  const heroFrames = ['hero-cablecar.jpg', 'hero-gondola.jpg', 'hero-range.jpg'];
+  // Кадры баннера (замечание Заказчика от 19.08.2026, п. 1): блёклую
+  // спутниковую панораму (hero-range.jpg, подпись «Issyk-Kul») и гондолу с
+  // фирменной надписью французского курорта «friendlyMenuires» на кабине —
+  // убрали. Вместо них летний яркий кадр тропы чередуется с зимней кабиной
+  // канатной дороги, как и просил Заказчик.
+  const heroFrames = ['hero-cablecar.jpg', 'trail-after.jpg'];
 
   await prisma.homeSection.create({
     data: {
@@ -1323,8 +1320,11 @@ const ALBUMS: Array<{ slug: string; order: number; title: T; description: T; fil
       en: 'The Ile Alatau, cable cars and outdoor recreation routes.',
     },
     files: [
+      // hero-gondola.jpg исключена из публичной галереи (замечание Заказчика
+      // от 19.08.2026, п. 1): на кабине — фирменная надпись французского
+      // курорта «friendlyMenuires», к Алматинскому горному кластеру
+      // отношения не имеющая.
       'hero-cablecar.jpg',
-      'hero-gondola.jpg',
       'hero-range.jpg',
       'value-health.jpg',
       'value-sport.jpg',
