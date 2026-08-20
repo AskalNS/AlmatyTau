@@ -72,7 +72,18 @@ export function AlbumGrid({ items, locale }: { items: Media[]; locale: Locale })
           )}
           <figure className={styles.figure}>
             <SiteImage media={items[open]} locale={locale} sizes="90vw" priority />
-            {label(items[open]) && <figcaption>{label(items[open])}</figcaption>}
+            {(label(items[open]) || items[open].source) && (
+              <figcaption>
+                {label(items[open])}
+                {/* Атрибуция источника (CC BY-SA и т.п.) — обязательна для
+                    фото из внешних источников, для собственных материалов
+                    Заказчика source не показываем отдельной строкой не
+                    нужно, т.к. это просто название компании. */}
+                {items[open].source && items[open].source !== 'ТОО «Almaty Tau Management»' && (
+                  <span className={styles.credit}>{items[open].source}</span>
+                )}
+              </figcaption>
+            )}
             <span className={styles.counter}>
               {open + 1} / {items.length}
             </span>

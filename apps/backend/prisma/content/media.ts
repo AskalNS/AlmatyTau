@@ -71,6 +71,13 @@ export interface SeedImage {
   file: string;
   /** Альтернативный текст по языкам — обязателен для доступности (п. VI ТЗ). */
   alt: { kk: string; ru: string; en: string };
+  /**
+   * Источник/автор фото. По умолчанию — Заказчик (собственные материалы).
+   * Для фото, взятых из внешних источников со свободной лицензией (например,
+   * Wikimedia Commons), указывается автор и лицензия — обязательное условие
+   * CC BY-SA.
+   */
+  source?: string;
 }
 
 /**
@@ -141,7 +148,7 @@ export async function upsertImage(prisma: PrismaClient, image: SeedImage): Promi
     blurhash: await blurhashOf(normalized),
     variants: variants as never,
     alt: image.alt as never,
-    source: 'ТОО «Almaty Tau Management»',
+    source: image.source ?? 'ТОО «Almaty Tau Management»',
   };
 
   if (existing) {

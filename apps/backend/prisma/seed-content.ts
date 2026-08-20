@@ -126,12 +126,28 @@ const mid = (file: string): string => {
 
 const IMAGES: Array<{ file: string; alt: T }> = [
   {
-    file: 'hero-cablecar.jpg',
+    // Замечание Заказчика от 20.08.2026: реальное фото гондолы канатной
+    // дороги Медео — Шымбулак (не постановочный кадр), кабина чистая —
+    // никаких надписей и логотипов, кроме служебного номера вагона.
+    file: 'hero-cablecar-winter.jpg',
     alt: {
-      ru: 'Кабина канатной дороги на фоне заснеженной вершины',
-      kk: 'Қармен көмкерілген шың аясындағы аспалы жол кабинасы',
-      en: 'A cable car cabin against a snow-covered peak',
+      ru: 'Кабина канатной дороги Медео — Шымбулак зимой',
+      kk: 'Медеу — Шымбұлақ аспалы жолының қысқы кабинасы',
+      en: 'A Medeu–Shymbulak cable car cabin in winter',
     },
+    source: 'Фото: Kalabaha1969, Wikimedia Commons, лицензия CC BY-SA 3.0',
+  },
+  {
+    // Летний кадр той же кабины на кресельной канатной дороге — по тому же
+    // замечанию: баннер должен чередовать зиму и лето, а не показывать
+    // только снег.
+    file: 'hero-cablecar-summer.jpg',
+    alt: {
+      ru: 'Кабины кресельной канатной дороги над летним склоном Шымбулака',
+      kk: 'Шымбұлақтың жазғы беткейі үстіндегі орындықты аспалы жол кабиналары',
+      en: 'Chairlift cabins above a green summer slope at Shymbulak',
+    },
+    source: 'Фото: Kober, Wikimedia Commons, лицензия CC BY-SA 4.0',
   },
   {
     file: 'hero-range.jpg',
@@ -384,12 +400,13 @@ async function seedHome(): Promise<void> {
   // набор (в том числе кнопки в герое) им противоречит.
   await prisma.homeSection.deleteMany({});
 
-  // Кадры баннера (замечание Заказчика от 19.08.2026, п. 1): блёклую
-  // спутниковую панораму (hero-range.jpg, подпись «Issyk-Kul») и гондолу с
-  // фирменной надписью французского курорта «friendlyMenuires» на кабине —
-  // убрали. Вместо них летний яркий кадр тропы чередуется с зимней кабиной
-  // канатной дороги, как и просил Заказчик.
-  const heroFrames = ['hero-cablecar.jpg', 'trail-after.jpg'];
+  // Кадры баннера (замечания Заказчика от 19.08.2026 п. 1 и от 20.08.2026):
+  // блёклую спутниковую панораму (hero-range.jpg, подпись «Issyk-Kul») и
+  // гондолу с фирменной надписью французского курорта «friendlyMenuires» на
+  // кабине убрали. Вместо них — два подтверждённо реальных кадра настоящей
+  // канатной дороги Медео — Шымбулак (лицензия CC BY-SA, источник указан в
+  // Media.source каждого файла), зима чередуется с летом, кабины чистые.
+  const heroFrames = ['hero-cablecar-winter.jpg', 'hero-cablecar-summer.jpg'];
 
   await prisma.homeSection.create({
     data: {
@@ -1324,7 +1341,8 @@ const ALBUMS: Array<{ slug: string; order: number; title: T; description: T; fil
       // от 19.08.2026, п. 1): на кабине — фирменная надпись французского
       // курорта «friendlyMenuires», к Алматинскому горному кластеру
       // отношения не имеющая.
-      'hero-cablecar.jpg',
+      'hero-cablecar-winter.jpg',
+      'hero-cablecar-summer.jpg',
       'hero-range.jpg',
       'value-health.jpg',
       'value-sport.jpg',
