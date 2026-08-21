@@ -12,11 +12,20 @@ import { usePathname } from 'next/navigation';
  * Клиентский компонент нужен только ради usePathname; ссылка отрисовывается
  * на сервере с готовым href, поэтому работает и без JavaScript.
  */
-export function A11yLink({ className, label }: { className?: string; label: string }) {
+export function A11yLink({
+  className,
+  textClassName,
+  label,
+}: {
+  className?: string;
+  /** На узких экранах подпись визуально прячется — иконка остаётся кликабельной. */
+  textClassName?: string;
+  label: string;
+}) {
   const pathname = usePathname() || '/';
   return (
     <a className={className} href={`${pathname}?a11y=on`}>
-      ◐ {label}
+      <span aria-hidden="true">◐</span> <span className={textClassName}>{label}</span>
     </a>
   );
 }

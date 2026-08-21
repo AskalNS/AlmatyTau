@@ -39,7 +39,7 @@ export function Header({
           {/* Адрес в верхней строке не выводится: по замечанию Заказчика
               от 28.07.2026 он остаётся только в подвале. */}
           <span className={styles.spacer} />
-          <A11yLink className={styles.a11yLink} label={t.a11y} />
+          <A11yLink className={styles.a11yLink} textClassName={styles.linkText} label={t.a11y} />
           {/* Версия для незрячих (замечание Заказчика от 19.08.2026, п. 9):
               внешний экранный диктор, по примеру screenreader.tilqazyna.kz —
               свой экранный диктор сайт не реализует. */}
@@ -49,10 +49,12 @@ export function Header({
             target="_blank"
             rel="noopener noreferrer"
           >
-            ◉ {t.screenReader}
+            <span aria-hidden="true">◉</span> <span className={styles.linkText}>{t.screenReader}</span>
           </a>
+          {/* На узком экране подпись прячется, а не вся ссылка: раньше поиск
+              пропадал с мобильной шапки целиком и был недостижим одним тапом. */}
           <Link className={styles.searchLink} href={buildHref(locale, ROUTES.search)}>
-            ⌕ {t.search}
+            <span aria-hidden="true">⌕</span> <span className={styles.linkText}>{t.search}</span>
           </Link>
           <LanguageSwitcher locale={locale} path={path} />
         </div>

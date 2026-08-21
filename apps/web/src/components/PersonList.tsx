@@ -35,7 +35,7 @@ function PersonCard({ person, locale }: { person: PublicPerson; locale: Locale }
     <article className={styles.card}>
       <div className={styles.head}>
         <div className={styles.photo}>
-          <SiteImage media={person.photo} locale={locale} ratio="4/5" sizes="150px" />
+          <SiteImage media={person.photo} locale={locale} ratio="4/5" fit="contain" sizes="150px" />
         </div>
         <div className={styles.info}>
           <h2 className={styles.name}>{person.fullName}</h2>

@@ -195,12 +195,19 @@ img {
   color: var(--green-700);
 }
 
+/* Только вертикальный ритм — намеренно не padding-шорткодом. .section почти
+   всегда стоит рядом с .wrap ("wrap section"): шорткод padding перезаписывает
+   ВСЕ четыре стороны разом, и более поздний по файлу .section гасил
+   горизонтальные отступы .wrap целиком — контент на всех страницах, кроме
+   главной, стоял впритык к краю экрана и на телефоне, и на десктопе. */
 .section {
-  padding: 56px 0;
+  padding-top: 56px;
+  padding-bottom: 56px;
 }
 @media (min-width: 768px) {
   .section {
-    padding: 96px 0;
+    padding-top: 96px;
+    padding-bottom: 96px;
   }
 }
 .section-alt {

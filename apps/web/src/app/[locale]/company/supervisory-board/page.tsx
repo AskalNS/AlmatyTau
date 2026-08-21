@@ -4,6 +4,7 @@ import { API } from '@atm/contracts';
 import { apiGet } from '@/lib/api';
 import { dict } from '@/lib/dictionary';
 import { PersonList } from '@/components/PersonList';
+import styles from './supervisory-board.module.css';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -24,7 +25,7 @@ export default async function SupervisoryPage({ params }: { params: Promise<{ lo
   return (
     <div className="wrap section">
       <div className="eyebrow">Almaty Tau Management</div>
-      <h1 style={{ fontSize: 44, marginBottom: 40 }}>{t.supervisory}</h1>
+      <h1 className={styles.title}>{t.supervisory}</h1>
       <PersonList persons={persons} locale={loc} />
     </div>
   );

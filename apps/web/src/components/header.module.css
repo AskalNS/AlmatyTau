@@ -21,6 +21,9 @@
 }
 .a11yLink,
 .searchLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--s-600);
   white-space: nowrap;
 }
@@ -29,9 +32,29 @@
   color: var(--green-700);
   text-decoration: none;
 }
-@media (max-width: 640px) {
+
+/* Две ссылки версий для слабовидящих/незрячих, поиск и переключатель языка
+   в одну строку 38px не помещаются уже начиная примерно с 600px (текст
+   подписей длиннее самой шапки) — задолго до брейкпоинта бургер-меню.
+   Прячем подписи визуально, оставляя иконку кликабельной и с тем же текстом
+   для скринридера: так строка всегда укладывается в одну линию на любом
+   экране и на любом из трёх языков, без подбора «магической» ширины под
+   конкретный перевод. */
+@media (max-width: 680px) {
+  .linkText {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .a11yLink,
   .searchLink {
-    display: none;
+    padding: 8px 4px;
   }
 }
 
