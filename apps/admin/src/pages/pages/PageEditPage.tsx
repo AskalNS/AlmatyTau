@@ -7,8 +7,8 @@ import {
   LOCALES,
   LOCALE_LABELS,
   slugify,
-  type News,
-  type UpsertNewsRequest,
+  type Page,
+  type UpsertPageRequest,
   type Locale,
   type Blocks,
 } from '@atm/contracts';
@@ -17,73 +17,59 @@ import { PageHeader } from '@/components/PageHeader';
 import { BlockEditor } from '@/components/BlockEditor';
 import { MediaField } from '@/components/MediaField';
 
-type TrState = {
-  title: string;
-  excerpt: string;
-  blocks: Blocks;
-  /** Присутствует ли перевод на этот язык. Пустой = не переведено. */
-  enabled: boolean;
-};
+type TrState = { title: string; lead: string; blocks: Blocks; enabled: boolean };
 
-/**
- * Редактор новости — ключевой экран админки.
- *
- * Языковые вкладки KK / RU / EN со статусом перевода (п. III ТЗ): галочка,
- * если язык заполнен. Публикуются только заполненные языки — незаполненный
- * не отправляется в переводах и не появится на сайте на этом языке.
- */
-export function NewsEditPage() {
+/** Редактор страницы: путь, обложка, родитель, языковые вкладки, блоки. */
+export function PageEditPage() {
   const { id } = useParams<{ id: string }>();
-  const isNew = !id;
+  const isNew = !id || id === 'new';
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  const [slug, setSlug] = useState('');
-  const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'ARCHIVED'>('DRAFT');
+  const [path, setPath] = useState('');
+  const [parentId, setParentId] = useState<string>('');
   const [coverId, setCoverId] = useState<string | null>(null);
-  const [isPinned, setIsPinned] = useState(false);
+  const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'ARCHIVED'>('DRAFT');
   const [activeLocale, setActiveLocale] = useState<Locale>('ru');
   const [tr, setTr] = useState<Record<Locale, TrState>>(() => emptyTranslations());
   const [errors, setErrors] = useState<Record<string, string[]>>({});
-  const [slugTouched, setSlugTouched] = useState(false);
+  const [pathTouched, setPathTouched] = useState(false);
 
-  // Загрузка существующей новости.
   const { data } = useQuery({
-    queryKey: ['admin-news', id],
-    queryFn: () => api.get<News>(API.admin.newsItem(id!)),
+    queryKey: ['admin-page', id],
+    queryFn: () => api.get<Page>(API.admin.page(id!)),
     enabled: !isNew,
+  });
+
+  const { data: allPages } = useQuery({
+    queryKey: ['admin-pages'],
+    queryFn: () => api.get<Page[]>(API.admin.pages),
   });
 
   useEffect(() => {
     if (!data) return;
-    setSlug(data.slug);
-    setStatus(data.status);
+    setPath(data.path);
+    setParentId(data.parentId ?? '');
     setCoverId(data.coverId);
-    setIsPinned(data.isPinned);
-    setSlugTouched(true);
+    setStatus(data.status);
+    setPathTouched(true);
     const next = emptyTranslations();
     for (const t of data.translations) {
-      next[t.locale] = {
-        title: t.title,
-        excerpt: t.excerpt ?? '',
-        blocks: t.blocks,
-        enabled: true,
-      };
+      next[t.locale] = { title: t.title, lead: t.lead ?? '', blocks: t.blocks, enabled: true };
     }
     setTr(next);
   }, [data]);
 
-  // Автогенерация slug из русского заголовка, пока адрес не правили руками.
   useEffect(() => {
-    if (isNew && !slugTouched && tr.ru.title) setSlug(slugify(tr.ru.title));
-  }, [tr.ru.title, isNew, slugTouched]);
+    if (isNew && !pathTouched && tr.ru.title) setPath(slugify(tr.ru.title));
+  }, [tr.ru.title, isNew, pathTouched]);
 
   const save = useMutation({
-    mutationFn: (payload: UpsertNewsRequest) =>
-      isNew ? api.post<News>(API.admin.news, payload) : api.put<News>(API.admin.newsItem(id!), payload),
+    mutationFn: (payload: UpsertPageRequest) =>
+      isNew ? api.post<Page>(API.admin.pages, payload) : api.put<Page>(API.admin.page(id!), payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin-news'] });
-      navigate(ADMIN_ROUTES.news);
+      qc.invalidateQueries({ queryKey: ['admin-pages'] });
+      navigate(ADMIN_ROUTES.pages);
     },
     onError: (e) => {
       if (e instanceof ApiRequestError && e.fields) setErrors(e.fields);
@@ -92,11 +78,10 @@ export function NewsEditPage() {
 
   function onSave(publish: boolean) {
     setErrors({});
-    // В переводы попадают только заполненные языки (п. III ТЗ).
     const translations = LOCALES.filter((l) => tr[l].enabled && tr[l].title.trim()).map((l) => ({
       locale: l,
       title: tr[l].title,
-      excerpt: tr[l].excerpt || null,
+      lead: tr[l].lead || null,
       blocks: tr[l].blocks,
     }));
 
@@ -106,12 +91,13 @@ export function NewsEditPage() {
     }
 
     save.mutate({
-      slug,
-      status: publish ? 'PUBLISHED' : status,
+      path,
+      parentId: parentId || null,
       coverId,
-      isPinned,
+      status: publish ? 'PUBLISHED' : status,
+      order: 0,
       translations,
-    } as UpsertNewsRequest);
+    } as UpsertPageRequest);
   }
 
   const cur = tr[activeLocale];
@@ -121,7 +107,7 @@ export function NewsEditPage() {
   return (
     <div>
       <PageHeader
-        title={isNew ? 'Новая новость' : 'Редактирование новости'}
+        title={isNew ? 'Новая страница' : 'Редактирование страницы'}
         action={
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn btn-secondary" onClick={() => onSave(false)} disabled={save.isPending}>
@@ -136,16 +122,12 @@ export function NewsEditPage() {
 
       {errors._ && <div style={errBox}>{errors._[0]}</div>}
 
-      {/* Языковые вкладки со статусом перевода */}
       <div style={tabs}>
         {LOCALES.map((l) => (
           <button
             key={l}
             onClick={() => setActiveLocale(l)}
-            style={{
-              ...tab,
-              ...(activeLocale === l ? tabActive : {}),
-            }}
+            style={{ ...tab, ...(activeLocale === l ? tabActive : {}) }}
           >
             {LOCALE_LABELS[l]}{' '}
             {tr[l].enabled && tr[l].title.trim() ? (
@@ -165,12 +147,8 @@ export function NewsEditPage() {
             {errors.title && <div className="error">{errors.title[0]}</div>}
           </div>
           <div className="field">
-            <label>Анонс для ленты</label>
-            <textarea
-              value={cur.excerpt}
-              onChange={(e) => setCur({ excerpt: e.target.value })}
-              style={{ minHeight: 70 }}
-            />
+            <label>Вводный абзац</label>
+            <textarea value={cur.lead} onChange={(e) => setCur({ lead: e.target.value })} style={{ minHeight: 70 }} />
           </div>
           <div className="field">
             <label>Содержание</label>
@@ -181,17 +159,32 @@ export function NewsEditPage() {
         <div>
           <div className="card" style={{ padding: 20, marginBottom: 16 }}>
             <div className="field">
-              <label>Адрес (slug)</label>
+              <label>Адрес (путь)</label>
               <input
-                value={slug}
+                value={path}
                 onChange={(e) => {
-                  setSlug(e.target.value);
-                  setSlugTouched(true);
+                  setPath(e.target.value);
+                  setPathTouched(true);
                 }}
+                placeholder="company/about"
+                disabled={data?.isSystem}
               />
-              {errors.slug && <div className="error">{errors.slug[0]}</div>}
+              {errors.path && <div className="error">{errors.path[0]}</div>}
             </div>
             <div className="field">
+              <label>Родительская страница</label>
+              <select value={parentId} onChange={(e) => setParentId(e.target.value)}>
+                <option value="">— нет —</option>
+                {allPages
+                  ?.filter((p) => p.id !== id)
+                  .map((p) => (
+                    <option key={p.id} value={p.id}>
+                      /{p.path}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div className="field" style={{ marginBottom: 0 }}>
               <label>Статус</label>
               <select value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
                 <option value="DRAFT">Черновик</option>
@@ -199,19 +192,10 @@ export function NewsEditPage() {
                 <option value="ARCHIVED">В архиве</option>
               </select>
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 0, fontWeight: 400 }}>
-              <input type="checkbox" checked={isPinned} onChange={(e) => setIsPinned(e.target.checked)} />
-              Закрепить вверху ленты
-            </label>
           </div>
 
-          <div className="card" style={{ padding: 20, marginBottom: 16 }}>
-            <MediaField label="Обложка новости" mediaId={coverId} onChange={setCoverId} />
-          </div>
-
-          <div className="card" style={{ padding: 16, fontSize: 13, color: 'var(--s-500)', lineHeight: 1.6 }}>
-            Языковая версия публикуется только если её заголовок заполнен.
-            Незаполненный язык не появится на сайте (п. III ТЗ).
+          <div className="card" style={{ padding: 20 }}>
+            <MediaField label="Обложка страницы" mediaId={coverId} onChange={setCoverId} />
           </div>
         </div>
       </div>
@@ -221,9 +205,9 @@ export function NewsEditPage() {
 
 function emptyTranslations(): Record<Locale, TrState> {
   return {
-    kk: { title: '', excerpt: '', blocks: [], enabled: false },
-    ru: { title: '', excerpt: '', blocks: [], enabled: false },
-    en: { title: '', excerpt: '', blocks: [], enabled: false },
+    kk: { title: '', lead: '', blocks: [], enabled: false },
+    ru: { title: '', lead: '', blocks: [], enabled: false },
+    en: { title: '', lead: '', blocks: [], enabled: false },
   };
 }
 

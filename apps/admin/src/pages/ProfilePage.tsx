@@ -6,7 +6,7 @@ import {
   type TotpConfirmResponse,
   type ChangePasswordRequest,
 } from '@atm/contracts';
-import { api, ApiRequestError } from '@/lib/api';
+import { api, ApiRequestError, setTokens } from '@/lib/api';
 import { useAuth } from '@/store/auth';
 import { PageHeader } from '@/components/PageHeader';
 
@@ -96,6 +96,10 @@ function SetupTotp({ onDone }: { onDone: () => Promise<void> }) {
   const confirm = useMutation({
     mutationFn: () => api.post<TotpConfirmResponse>(API.auth.totpConfirm, { code }),
     onSuccess: async (res) => {
+      // Новый access-токен уже несёт twoFactorEnabled=true — без этого
+      // следующий же запрос (ниже, refreshUser) упёрся бы в принудительную
+      // проверку 2FA на бэкенде со СТАРЫМ токеном, который её ещё не видел.
+      setTokens(res.accessToken, res.refreshToken);
       setCodes(res.recoveryCodes);
       await onDone();
     },

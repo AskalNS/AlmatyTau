@@ -7,50 +7,41 @@ import {
   LOCALES,
   LOCALE_LABELS,
   slugify,
-  type News,
-  type UpsertNewsRequest,
+  type Vacancy,
+  type UpsertVacancyRequest,
   type Locale,
-  type Blocks,
 } from '@atm/contracts';
 import { api, ApiRequestError } from '@/lib/api';
 import { PageHeader } from '@/components/PageHeader';
-import { BlockEditor } from '@/components/BlockEditor';
-import { MediaField } from '@/components/MediaField';
 
 type TrState = {
   title: string;
-  excerpt: string;
-  blocks: Blocks;
-  /** Присутствует ли перевод на этот язык. Пустой = не переведено. */
+  department: string;
+  requirements: string;
+  conditions: string;
+  responsibilities: string;
   enabled: boolean;
 };
 
-/**
- * Редактор новости — ключевой экран админки.
- *
- * Языковые вкладки KK / RU / EN со статусом перевода (п. III ТЗ): галочка,
- * если язык заполнен. Публикуются только заполненные языки — незаполненный
- * не отправляется в переводах и не появится на сайте на этом языке.
- */
-export function NewsEditPage() {
+/** Редактор вакансии. */
+export function VacancyEditPage() {
   const { id } = useParams<{ id: string }>();
-  const isNew = !id;
+  const isNew = !id || id === 'new';
   const navigate = useNavigate();
   const qc = useQueryClient();
 
   const [slug, setSlug] = useState('');
   const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'ARCHIVED'>('DRAFT');
-  const [coverId, setCoverId] = useState<string | null>(null);
-  const [isPinned, setIsPinned] = useState(false);
+  const [deadline, setDeadline] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
   const [activeLocale, setActiveLocale] = useState<Locale>('ru');
   const [tr, setTr] = useState<Record<Locale, TrState>>(() => emptyTranslations());
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [slugTouched, setSlugTouched] = useState(false);
 
-  // Загрузка существующей новости.
   const { data } = useQuery({
-    queryKey: ['admin-news', id],
-    queryFn: () => api.get<News>(API.admin.newsItem(id!)),
+    queryKey: ['admin-vacancy', id],
+    queryFn: () => api.get<Vacancy>(API.admin.vacancy(id!)),
     enabled: !isNew,
   });
 
@@ -58,32 +49,33 @@ export function NewsEditPage() {
     if (!data) return;
     setSlug(data.slug);
     setStatus(data.status);
-    setCoverId(data.coverId);
-    setIsPinned(data.isPinned);
+    setDeadline(data.deadline ? data.deadline.slice(0, 10) : '');
+    setContactEmail(data.contactEmail ?? '');
     setSlugTouched(true);
     const next = emptyTranslations();
     for (const t of data.translations) {
       next[t.locale] = {
         title: t.title,
-        excerpt: t.excerpt ?? '',
-        blocks: t.blocks,
+        department: t.department ?? '',
+        requirements: t.requirements ?? '',
+        conditions: t.conditions ?? '',
+        responsibilities: t.responsibilities ?? '',
         enabled: true,
       };
     }
     setTr(next);
   }, [data]);
 
-  // Автогенерация slug из русского заголовка, пока адрес не правили руками.
   useEffect(() => {
     if (isNew && !slugTouched && tr.ru.title) setSlug(slugify(tr.ru.title));
   }, [tr.ru.title, isNew, slugTouched]);
 
   const save = useMutation({
-    mutationFn: (payload: UpsertNewsRequest) =>
-      isNew ? api.post<News>(API.admin.news, payload) : api.put<News>(API.admin.newsItem(id!), payload),
+    mutationFn: (payload: UpsertVacancyRequest) =>
+      isNew ? api.post<Vacancy>(API.admin.vacancies, payload) : api.put<Vacancy>(API.admin.vacancy(id!), payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin-news'] });
-      navigate(ADMIN_ROUTES.news);
+      qc.invalidateQueries({ queryKey: ['admin-vacancies'] });
+      navigate(ADMIN_ROUTES.vacancies);
     },
     onError: (e) => {
       if (e instanceof ApiRequestError && e.fields) setErrors(e.fields);
@@ -92,12 +84,13 @@ export function NewsEditPage() {
 
   function onSave(publish: boolean) {
     setErrors({});
-    // В переводы попадают только заполненные языки (п. III ТЗ).
     const translations = LOCALES.filter((l) => tr[l].enabled && tr[l].title.trim()).map((l) => ({
       locale: l,
       title: tr[l].title,
-      excerpt: tr[l].excerpt || null,
-      blocks: tr[l].blocks,
+      department: tr[l].department || null,
+      requirements: tr[l].requirements || null,
+      conditions: tr[l].conditions || null,
+      responsibilities: tr[l].responsibilities || null,
     }));
 
     if (translations.length === 0) {
@@ -108,10 +101,10 @@ export function NewsEditPage() {
     save.mutate({
       slug,
       status: publish ? 'PUBLISHED' : status,
-      coverId,
-      isPinned,
+      deadline: deadline || null,
+      contactEmail: contactEmail || null,
       translations,
-    } as UpsertNewsRequest);
+    } as UpsertVacancyRequest);
   }
 
   const cur = tr[activeLocale];
@@ -121,7 +114,7 @@ export function NewsEditPage() {
   return (
     <div>
       <PageHeader
-        title={isNew ? 'Новая новость' : 'Редактирование новости'}
+        title={isNew ? 'Новая вакансия' : 'Редактирование вакансии'}
         action={
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn btn-secondary" onClick={() => onSave(false)} disabled={save.isPending}>
@@ -136,17 +129,9 @@ export function NewsEditPage() {
 
       {errors._ && <div style={errBox}>{errors._[0]}</div>}
 
-      {/* Языковые вкладки со статусом перевода */}
       <div style={tabs}>
         {LOCALES.map((l) => (
-          <button
-            key={l}
-            onClick={() => setActiveLocale(l)}
-            style={{
-              ...tab,
-              ...(activeLocale === l ? tabActive : {}),
-            }}
-          >
+          <button key={l} onClick={() => setActiveLocale(l)} style={{ ...tab, ...(activeLocale === l ? tabActive : {}) }}>
             {LOCALE_LABELS[l]}{' '}
             {tr[l].enabled && tr[l].title.trim() ? (
               <span style={{ color: 'var(--green-600)' }}>✓</span>
@@ -160,26 +145,30 @@ export function NewsEditPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 24 }}>
         <div className="card" style={{ padding: 24 }}>
           <div className="field">
-            <label>Заголовок · {activeLocale.toUpperCase()}</label>
+            <label>Название · {activeLocale.toUpperCase()}</label>
             <input value={cur.title} onChange={(e) => setCur({ title: e.target.value })} />
             {errors.title && <div className="error">{errors.title[0]}</div>}
           </div>
           <div className="field">
-            <label>Анонс для ленты</label>
-            <textarea
-              value={cur.excerpt}
-              onChange={(e) => setCur({ excerpt: e.target.value })}
-              style={{ minHeight: 70 }}
-            />
+            <label>Отдел</label>
+            <input value={cur.department} onChange={(e) => setCur({ department: e.target.value })} />
           </div>
           <div className="field">
-            <label>Содержание</label>
-            <BlockEditor blocks={cur.blocks} onChange={(blocks) => setCur({ blocks })} />
+            <label>Обязанности</label>
+            <textarea value={cur.responsibilities} onChange={(e) => setCur({ responsibilities: e.target.value })} style={{ minHeight: 100 }} />
+          </div>
+          <div className="field">
+            <label>Требования</label>
+            <textarea value={cur.requirements} onChange={(e) => setCur({ requirements: e.target.value })} style={{ minHeight: 100 }} />
+          </div>
+          <div className="field" style={{ marginBottom: 0 }}>
+            <label>Условия</label>
+            <textarea value={cur.conditions} onChange={(e) => setCur({ conditions: e.target.value })} style={{ minHeight: 100 }} />
           </div>
         </div>
 
         <div>
-          <div className="card" style={{ padding: 20, marginBottom: 16 }}>
+          <div className="card" style={{ padding: 20 }}>
             <div className="field">
               <label>Адрес (slug)</label>
               <input
@@ -199,19 +188,15 @@ export function NewsEditPage() {
                 <option value="ARCHIVED">В архиве</option>
               </select>
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 0, fontWeight: 400 }}>
-              <input type="checkbox" checked={isPinned} onChange={(e) => setIsPinned(e.target.checked)} />
-              Закрепить вверху ленты
-            </label>
-          </div>
-
-          <div className="card" style={{ padding: 20, marginBottom: 16 }}>
-            <MediaField label="Обложка новости" mediaId={coverId} onChange={setCoverId} />
-          </div>
-
-          <div className="card" style={{ padding: 16, fontSize: 13, color: 'var(--s-500)', lineHeight: 1.6 }}>
-            Языковая версия публикуется только если её заголовок заполнен.
-            Незаполненный язык не появится на сайте (п. III ТЗ).
+            <div className="field">
+              <label>Приём документов до</label>
+              <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+            </div>
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label>Контактный e-mail</label>
+              <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
+              {errors.contactEmail && <div className="error">{errors.contactEmail[0]}</div>}
+            </div>
           </div>
         </div>
       </div>
@@ -221,9 +206,9 @@ export function NewsEditPage() {
 
 function emptyTranslations(): Record<Locale, TrState> {
   return {
-    kk: { title: '', excerpt: '', blocks: [], enabled: false },
-    ru: { title: '', excerpt: '', blocks: [], enabled: false },
-    en: { title: '', excerpt: '', blocks: [], enabled: false },
+    kk: { title: '', department: '', requirements: '', conditions: '', responsibilities: '', enabled: false },
+    ru: { title: '', department: '', requirements: '', conditions: '', responsibilities: '', enabled: false },
+    en: { title: '', department: '', requirements: '', conditions: '', responsibilities: '', enabled: false },
   };
 }
 

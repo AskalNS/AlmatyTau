@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ADMIN_ROUTES } from '@atm/contracts';
 import { useAuth } from './store/auth';
 import { LoginPage } from './pages/LoginPage';
@@ -8,10 +8,26 @@ import { RequireAuth, RequireAdmin } from './components/Guards';
 import { DashboardPage } from './pages/DashboardPage';
 import { NewsListPage } from './pages/news/NewsListPage';
 import { NewsEditPage } from './pages/news/NewsEditPage';
+import { PagesListPage } from './pages/pages/PagesListPage';
+import { PageEditPage } from './pages/pages/PageEditPage';
+import { PersonsListPage } from './pages/persons/PersonsListPage';
+import { PersonEditPage } from './pages/persons/PersonEditPage';
+import { DocumentsListPage } from './pages/documents/DocumentsListPage';
+import { DocumentEditPage } from './pages/documents/DocumentEditPage';
+import { VacanciesListPage } from './pages/vacancies/VacanciesListPage';
+import { VacancyEditPage } from './pages/vacancies/VacancyEditPage';
+import { AlbumsListPage } from './pages/albums/AlbumsListPage';
+import { AlbumEditPage } from './pages/albums/AlbumEditPage';
+import { MediaLibraryPage } from './pages/media/MediaLibraryPage';
+import { LinksListPage } from './pages/links/LinksListPage';
+import { LinkEditPage } from './pages/links/LinkEditPage';
+import { MenuListPage } from './pages/menu/MenuListPage';
+import { MenuEditPage } from './pages/menu/MenuEditPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { HomeSectionsPage } from './pages/HomeSectionsPage';
 import { UsersPage } from './pages/UsersPage';
 import { AuditPage } from './pages/AuditPage';
 import { ProfilePage } from './pages/ProfilePage';
-import { PlaceholderPage } from './pages/PlaceholderPage';
 
 /**
  * Маршрутизация админки.
@@ -22,6 +38,7 @@ import { PlaceholderPage } from './pages/PlaceholderPage';
  */
 export function App() {
   const { initializing, user, init } = useAuth();
+  const location = useLocation();
 
   useEffect(() => {
     void init();
@@ -29,6 +46,13 @@ export function App() {
 
   if (initializing) {
     return <div style={{ padding: 40, color: 'var(--s-500)' }}>Загрузка…</div>;
+  }
+
+  // 2FA обязательна для ADMIN (п. X.II ТЗ) — бэкенд и так блокирует всё,
+  // кроме её настройки (JwtAuthGuard), пока она выключена. Здесь — только
+  // чтобы не показывать россыпь 403 при переходе куда угодно ещё.
+  if (user?.role === 'ADMIN' && !user.twoFactorEnabled && location.pathname !== ADMIN_ROUTES.profile) {
+    return <Navigate to={ADMIN_ROUTES.profile} replace />;
   }
 
   return (
@@ -44,20 +68,40 @@ export function App() {
       >
         <Route path={ADMIN_ROUTES.dashboard} element={<DashboardPage />} />
 
-        {/* Контент — обе роли */}
+        {/* Контент — обе роли (п. V ТЗ) */}
         <Route path={ADMIN_ROUTES.news} element={<NewsListPage />} />
         <Route path={ADMIN_ROUTES.newsNew} element={<NewsEditPage />} />
         <Route path="/news/:id" element={<NewsEditPage />} />
 
-        <Route path={ADMIN_ROUTES.pages} element={<PlaceholderPage title="Страницы" />} />
-        <Route path={ADMIN_ROUTES.persons} element={<PlaceholderPage title="Персоны" />} />
-        <Route path={ADMIN_ROUTES.documents} element={<PlaceholderPage title="Документы" />} />
-        <Route path={ADMIN_ROUTES.vacancies} element={<PlaceholderPage title="Вакансии" />} />
-        <Route path={ADMIN_ROUTES.albums} element={<PlaceholderPage title="Медиагалерея" />} />
-        <Route path={ADMIN_ROUTES.media} element={<PlaceholderPage title="Медиабиблиотека" />} />
-        <Route path={ADMIN_ROUTES.links} element={<PlaceholderPage title="Ссылки" />} />
-        <Route path={ADMIN_ROUTES.menu} element={<PlaceholderPage title="Меню" />} />
-        <Route path={ADMIN_ROUTES.home} element={<PlaceholderPage title="Главная страница" />} />
+        <Route path={ADMIN_ROUTES.pages} element={<PagesListPage />} />
+        <Route path="/pages/:id" element={<PageEditPage />} />
+
+        <Route path={ADMIN_ROUTES.persons} element={<PersonsListPage />} />
+        <Route path={ADMIN_ROUTES.personNew} element={<PersonEditPage />} />
+        <Route path="/persons/:id" element={<PersonEditPage />} />
+
+        <Route path={ADMIN_ROUTES.documents} element={<DocumentsListPage />} />
+        <Route path="/documents/:id" element={<DocumentEditPage />} />
+
+        <Route path={ADMIN_ROUTES.vacancies} element={<VacanciesListPage />} />
+        <Route path={ADMIN_ROUTES.vacancyNew} element={<VacancyEditPage />} />
+        <Route path="/vacancies/:id" element={<VacancyEditPage />} />
+
+        <Route path={ADMIN_ROUTES.albums} element={<AlbumsListPage />} />
+        <Route path={ADMIN_ROUTES.albumNew} element={<AlbumEditPage />} />
+        <Route path="/albums/:id" element={<AlbumEditPage />} />
+
+        <Route path={ADMIN_ROUTES.media} element={<MediaLibraryPage />} />
+
+        <Route path={ADMIN_ROUTES.links} element={<LinksListPage />} />
+        <Route path={ADMIN_ROUTES.linkNew} element={<LinkEditPage />} />
+        <Route path="/links/:id" element={<LinkEditPage />} />
+
+        <Route path={ADMIN_ROUTES.menu} element={<MenuListPage />} />
+        <Route path={ADMIN_ROUTES.menuNew} element={<MenuEditPage />} />
+        <Route path="/menu/:id" element={<MenuEditPage />} />
+
+        <Route path={ADMIN_ROUTES.home} element={<HomeSectionsPage />} />
         <Route path={ADMIN_ROUTES.profile} element={<ProfilePage />} />
 
         {/* Только администратор */}
@@ -81,7 +125,7 @@ export function App() {
           path={ADMIN_ROUTES.settings}
           element={
             <RequireAdmin>
-              <PlaceholderPage title="Настройки сайта" />
+              <SettingsPage />
             </RequireAdmin>
           }
         />

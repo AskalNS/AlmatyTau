@@ -105,9 +105,10 @@ export const api = {
   patch: <T>(path: string, body: unknown) =>
     raw(path, { method: 'PATCH', body: JSON.stringify(body) }).then((r) => parse<T>(r)),
   del: <T>(path: string) => raw(path, { method: 'DELETE' }).then((r) => parse<T>(r)),
-  upload: <T>(path: string, file: File) => {
+  upload: <T>(path: string, file: File, fields?: Record<string, string>) => {
     const fd = new FormData();
     fd.append('file', file);
+    if (fields) for (const [k, v] of Object.entries(fields)) fd.append(k, v);
     return raw(path, { method: 'POST', body: fd }).then((r) => parse<T>(r));
   },
 };
