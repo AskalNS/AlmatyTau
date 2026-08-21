@@ -6,18 +6,31 @@
 
 ## Что делает
 
-- `db_<время>.sql.gz` — сжатый дамп базы (`pg_dump`)
-- `media/` — зеркало бакета MinIO
-- `manifest.txt` — размеры и дата
+- `db_<время>.sql.gz[.enc]` — сжатый дамп базы (`pg_dump`)
+- `media_<время>.tar.gz[.enc]` — архив зеркала бакета MinIO
+- `manifest.txt` — размеры, дата, включено ли шифрование
 - `backup.log` — журнал прогонов
 
 Расписание задаётся `BACKUP_CRON` (по умолчанию `0 3 * * *` — каждый день в 03:00).
 
+## Шифрование
+
+Если в `.env` задан `BACKUP_ENCRYPTION_PASSPHRASE`, оба архива шифруются
+AES-256 (`openssl enc`) и на диске лежат только файлы `*.enc` — сам дамп в
+незашифрованном виде на диск не попадает. Без этой переменной архивы
+сохраняются как есть, и `backup.sh` явно предупреждает об этом в лог при
+каждом прогоне. Потеря пароля равносильна потере бэкапа — храните его
+отдельно от сервера (менеджер паролей, сейф), не в `.env` рядом с копиями.
+
 ## Важно: хранить отдельно от сервера
 
-ТЗ требует хранить копии отдельно от основного сервера. Смонтируйте `./backups`
-на сетевой диск или бакет хостинг-провайдера — отредактируйте том сервиса
-`backup` в `docker-compose.yml`.
+ТЗ требует хранить копии отдельно от основного сервера. **По умолчанию том
+`backup` в `docker-compose.yml` указывает на локальный каталог `./backups`
+на этом же хосте — этому требованию он НЕ соответствует**, это временная
+заготовка. Смонтируйте `./backups` на сетевой диск (NFS/SMB), примонтированный
+бакет хостинг-провайдера (`rclone mount`/`s3fs`) или настройте отдельным шагом
+выгрузку `/backups` за пределы сервера (`rclone sync`, `rsync` на другой хост
+и т.п.) — отредактируйте том сервиса `backup` в `docker-compose.yml`.
 
 ## Ручной запуск
 
@@ -31,6 +44,12 @@ docker compose exec backup /usr/local/bin/backup.sh
 # найти нужную копию
 ls backups/
 
+# если архив зашифрован (расширение .enc) — сначала расшифровать
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+  -pass env:BACKUP_ENCRYPTION_PASSPHRASE \
+  -in backups/2026-07-23/db_2026-07-23_030000.sql.gz.enc \
+  -out backups/2026-07-23/db_2026-07-23_030000.sql.gz
+
 # восстановить (ОСТОРОЖНО: перезапишет текущие данные)
 gunzip -c backups/2026-07-23/db_2026-07-23_030000.sql.gz | \
   docker compose exec -T postgres psql -U atm -d atm
@@ -39,6 +58,14 @@ gunzip -c backups/2026-07-23/db_2026-07-23_030000.sql.gz | \
 ## Восстановление медиа
 
 ```bash
+# если архив зашифрован (расширение .enc) — сначала расшифровать
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+  -pass env:BACKUP_ENCRYPTION_PASSPHRASE \
+  -in backups/2026-07-23/media_2026-07-23_030000.tar.gz.enc \
+  -out backups/2026-07-23/media_2026-07-23_030000.tar.gz
+
+tar -xzf backups/2026-07-23/media_2026-07-23_030000.tar.gz -C backups/2026-07-23/
+
 docker compose exec backup sh -c '
   mc alias set dst "$S3_ENDPOINT" "$S3_ACCESS_KEY" "$S3_SECRET_KEY" &&
   mc mirror --overwrite /backups/2026-07-23/media "dst/$S3_BUCKET"

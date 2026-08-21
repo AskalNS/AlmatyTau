@@ -6,8 +6,9 @@
 # =============================================================================
 FROM alpine:3.20
 
-# postgresql-client даёт pg_dump той же мажорной версии, что и сервер (16)
-RUN apk add --no-cache postgresql16-client bash tzdata curl \
+# postgresql-client даёт pg_dump той же мажорной версии, что и сервер (16).
+# openssl — шифрование архивов бэкапа перед тем, как они лягут на диск.
+RUN apk add --no-cache postgresql16-client bash tzdata curl openssl tar \
     && curl -sSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc \
     && chmod +x /usr/local/bin/mc
 

@@ -85,7 +85,7 @@ curl -f http://localhost/api/health     # {"status":"ok"}
 
 ```bash
 docker compose run --rm certbot certonly --webroot -w /var/www/certbot \
-  -d atm.kz -d www.atm.kz -d admin.atm.kz -d api.atm.kz \
+  -d atm.kz -d www.atm.kz -d api.atm.kz \
   --email <почта> --agree-tos --no-eff-email
 
 docker compose exec nginx nginx -s reload

@@ -1,0 +1,109 @@
+# =============================================================================
+#  HTTPS для atm.kz / www.atm.kz / api.atm.kz (п. X.I ТЗ).
+#
+#  Файл сделан НЕактивным нарочно — расширение .disabled, nginx.conf грузит
+#  только *.conf. Пока на сервер не указан домен, Let's Encrypt не может
+#  выпустить сертификат (HTTP-01 проверка требует настоящего домена, не
+#  голого IP), поэтому сайт временно работает по HTTP (см. atm.conf).
+#
+#  Как включить после появления домена:
+#    1) DNS: A-записи atm.kz, www.atm.kz, api.atm.kz → IP этого сервера.
+#    2) docker compose run --rm certbot certonly --webroot -w /var/www/certbot \
+#         -d atm.kz -d www.atm.kz -d api.atm.kz --email <почта> --agree-tos --no-eff-email
+#    3) mv infra/nginx/conf.d/atm-ssl.conf.disabled infra/nginx/conf.d/atm-ssl.conf
+#    4) В infra/nginx/conf.d/atm.conf раскомментировать в блоках atm.kz и
+#       api.atm.kz (порт 80) строку
+#         location / { return 301 https://$host$request_uri; }
+#       и убрать голый IP 89.35.125.37 из server_name — сертификат его не
+#       покрывает, а порт 80 всё равно должен остаться для ACME-обновления.
+#    5) docker compose exec nginx nginx -t && docker compose exec nginx nginx -s reload
+# =============================================================================
+
+server {
+  listen 443 ssl;
+  http2 on;
+  server_name atm.kz www.atm.kz;
+
+  ssl_certificate     /etc/letsencrypt/live/atm.kz/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/atm.kz/privkey.pem;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_ciphers HIGH:!aNULL:!MD5;
+  ssl_prefer_server_ciphers on;
+  ssl_session_cache shared:SSL:10m;
+  ssl_session_timeout 1d;
+
+  if ($blocked_ip) { return 403; }
+  limit_req zone=general burst=40 nodelay;
+
+  # Медиа из MinIO, пока нет отдельного домена media.atm.kz.
+  location /media/ {
+    proxy_pass http://minio:9000/;
+    proxy_set_header Host $host;
+  }
+
+  location / {
+    proxy_pass http://web:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+  }
+
+  # Оптимизированная отдача статики Next с длинным кэшем (п. VIII ТЗ)
+  location /_next/static/ {
+    proxy_pass http://web:3000;
+    add_header Cache-Control "public, max-age=31536000, immutable";
+  }
+
+  # Строгий лимит на вход — защита от перебора (п. X.II ТЗ).
+  location = /api/auth/login {
+    limit_req zone=login burst=5 nodelay;
+    proxy_pass http://backend:4000;
+    include /etc/nginx/conf.d/proxy-params.inc;
+  }
+  location /api/ {
+    limit_req zone=api burst=60 nodelay;
+    proxy_pass http://backend:4000;
+    include /etc/nginx/conf.d/proxy-params.inc;
+  }
+
+  add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+  add_header X-Content-Type-Options nosniff always;
+  add_header X-Frame-Options SAMEORIGIN always;
+  add_header Referrer-Policy strict-origin-when-cross-origin always;
+}
+
+server {
+  listen 443 ssl;
+  http2 on;
+  server_name api.atm.kz;
+
+  ssl_certificate     /etc/letsencrypt/live/atm.kz/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/atm.kz/privkey.pem;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_ciphers HIGH:!aNULL:!MD5;
+  ssl_prefer_server_ciphers on;
+  ssl_session_cache shared:SSL:10m;
+  ssl_session_timeout 1d;
+
+  if ($blocked_ip) { return 403; }
+  limit_req zone=general burst=40 nodelay;
+
+  location /api/auth/login {
+    limit_req zone=login burst=5 nodelay;
+    proxy_pass http://backend:4000;
+    include /etc/nginx/conf.d/proxy-params.inc;
+  }
+
+  location /api/ {
+    limit_req zone=api burst=60 nodelay;
+    proxy_pass http://backend:4000;
+    include /etc/nginx/conf.d/proxy-params.inc;
+  }
+
+  add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+  add_header X-Content-Type-Options nosniff always;
+}
