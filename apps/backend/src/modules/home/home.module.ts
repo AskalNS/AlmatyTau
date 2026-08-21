@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { HomeService } from './home.service';
-import { HomeController } from './home.controller';
+import { HomeController, AdminHomeController } from './home.controller';
 import { NewsModule } from '../news/news.module';
 import { LinksModule } from '../links/links.module';
 import { DocumentsModule } from '../documents/documents.module';
@@ -9,6 +9,6 @@ import { DocumentsModule } from '../documents/documents.module';
 @Module({
   imports: [NewsModule, LinksModule, DocumentsModule],
   providers: [HomeService],
-  controllers: [HomeController],
+  controllers: [HomeController, AdminHomeController],
 })
 export class HomeModule {}

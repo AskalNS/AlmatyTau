@@ -57,6 +57,9 @@ const envSchema = z.object({
 
   // --- Внешнее ---
   PUBLIC_WEB_URL: z.string().url().default('http://localhost:3000'),
+  // Внутри сети compose, в обход nginx и блок-листа по IP — тем же путём,
+  // каким web ходит в backend через API_INTERNAL_URL (см. docker-compose.yml).
+  WEB_INTERNAL_URL: z.string().url().default('http://web:3000'),
   REVALIDATE_SECRET: z.string().default(''),
 });
 

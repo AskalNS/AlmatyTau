@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   type PublicHome,
   type PublicHomeSection,
   type PublicHero,
+  type HomeSection,
+  type UpdateHomeSectionRequest,
   type Locale,
   blocksSchema,
   collectMediaIds,
@@ -16,6 +18,8 @@ import { NewsService } from '../news/news.service';
 import { LinksService } from '../links/links.service';
 import { SettingsService } from '../settings/settings.service';
 import { DocumentsService } from '../documents/documents.service';
+import { SanitizerService } from '../../common/sanitizer.service';
+import { AuditService, type AuditContext } from '../audit/audit.service';
 import { pickTranslation } from '../../common/i18n.util';
 
 const INCLUDE = {
@@ -42,7 +46,95 @@ export class HomeService {
     private readonly links: LinksService,
     private readonly settings: SettingsService,
     private readonly documents: DocumentsService,
+    private readonly sanitizer: SanitizerService,
+    private readonly audit: AuditService,
   ) {}
+
+  /** Секции для редактора — все переводы разом, без сведения к одному языку. */
+  async adminList(): Promise<HomeSection[]> {
+    const rows = await this.prisma.homeSection.findMany({
+      include: INCLUDE,
+      orderBy: { order: 'asc' },
+    });
+    return rows.map((r) => this.toAdminDto(r));
+  }
+
+  /**
+   * Редактирование существующей секции: тексты, фото в блоках, кадры
+   * баннера, видимость. Состав секций (их типы и число) не меняется здесь —
+   * он задан при наполнении сайта, см. комментарий у updateHomeSectionRequestSchema.
+   */
+  async update(id: string, dto: UpdateHomeSectionRequest, actor: AuditContext): Promise<HomeSection> {
+    const existing = await this.prisma.homeSection.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Секция не найдена');
+
+    const row = await this.prisma.$transaction(async (tx) => {
+      await tx.homeSectionTranslation.deleteMany({ where: { sectionId: id } });
+      return tx.homeSection.update({
+        where: { id },
+        data: {
+          isVisible: dto.isVisible,
+          heroPosterId: dto.heroPosterId ?? null,
+          heroVideoId: dto.heroVideoId ?? null,
+          videoOnMobile: dto.videoOnMobile,
+          href: dto.href ?? null,
+          translations: {
+            create: dto.translations.map((t) => ({
+              locale: t.locale,
+              eyebrow: t.eyebrow ?? null,
+              title: t.title ?? null,
+              subtitle: t.subtitle ?? null,
+              blocks: this.sanitizer.cleanBlocks(blocksSchema.parse(t.blocks)) as never,
+              primaryLabel: t.primaryLabel ?? null,
+              primaryHref: t.primaryHref ?? null,
+              secondaryLabel: t.secondaryLabel ?? null,
+              secondaryHref: t.secondaryHref ?? null,
+            })),
+          },
+        },
+        include: INCLUDE,
+      });
+    });
+
+    await this.cache.invalidateTags('home');
+    await this.audit.record({
+      action: 'UPDATE',
+      entity: 'home_section',
+      entityId: row.id,
+      entityLabel: this.label(row),
+      ...actor,
+    });
+    return this.toAdminDto(row);
+  }
+
+  private label(row: SectionRow): string {
+    const tr = row.translations.find((t) => t.locale === 'ru') ?? row.translations[0];
+    return tr?.title || row.type;
+  }
+
+  private toAdminDto(row: SectionRow): HomeSection {
+    return {
+      id: row.id,
+      type: row.type as HomeSection['type'],
+      order: row.order,
+      isVisible: row.isVisible,
+      heroPosterId: row.heroPosterId,
+      heroVideoId: row.heroVideoId,
+      videoOnMobile: row.videoOnMobile,
+      href: row.href,
+      translations: row.translations.map((t) => ({
+        locale: t.locale,
+        eyebrow: t.eyebrow,
+        title: t.title,
+        subtitle: t.subtitle,
+        blocks: blocksSchema.parse(t.blocks),
+        primaryLabel: t.primaryLabel,
+        primaryHref: t.primaryHref,
+        secondaryLabel: t.secondaryLabel,
+        secondaryHref: t.secondaryHref,
+      })),
+    };
+  }
 
   async publicHome(locale: Locale): Promise<PublicHome> {
     return this.cache.wrap(`home:${locale}`, 120, ['home', 'news', 'links'], async () => {

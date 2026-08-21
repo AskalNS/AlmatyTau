@@ -61,6 +61,8 @@ export class MediaController {
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 512 * 1024 * 1024 } }))
   upload(
     @UploadedFile() file: UploadedFileLike | undefined,
+    /** Фото людей (персоны) — без сжатия и без даунскейла, см. MediaService.uploadImageOriginal. */
+    @Body('keepOriginal') keepOriginal: string | undefined,
     @Req() req: Request,
     @CurrentUser() user: AuthUser,
   ) {
@@ -72,6 +74,7 @@ export class MediaController {
         declaredMime: file.mimetype,
       },
       this.actor(req, user),
+      { keepOriginal: keepOriginal === 'true' },
     );
   }
 

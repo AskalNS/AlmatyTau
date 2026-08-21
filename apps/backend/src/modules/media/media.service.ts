@@ -34,6 +34,14 @@ interface UploadInput {
   declaredMime: string;
 }
 
+/** Расширение файла по определённому по сигнатуре MIME — не по имени загрузки. */
+const IMAGE_EXTENSION_BY_MIME: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/avif': 'avif',
+};
+
 @Injectable()
 export class MediaService {
   constructor(
@@ -52,7 +60,7 @@ export class MediaService {
    * а переименованный в .jpg скрипт остаётся скриптом (п. X.III ТЗ).
    * SVG не принимается: это XML с исполняемым JavaScript.
    */
-  async upload(input: UploadInput, actor: AuditContext): Promise<Media> {
+  async upload(input: UploadInput, actor: AuditContext, opts: { keepOriginal?: boolean } = {}): Promise<Media> {
     const sniffed = await fileTypeFromBuffer(input.buffer);
 
     // Офисные форматы (docx, xlsx) file-type определяет как zip —
@@ -71,9 +79,58 @@ export class MediaService {
     const baseKey = `public/${kind.toLowerCase()}/${id}`;
 
     if (kind === 'IMAGE') {
-      return this.uploadImage(id, baseKey, input, actor);
+      return opts.keepOriginal
+        ? this.uploadImageOriginal(id, baseKey, mime, input, actor)
+        : this.uploadImage(id, baseKey, input, actor);
     }
     return this.uploadRaw(id, baseKey, kind, mime, input, actor);
+  }
+
+  /**
+   * Сохранение фото без обработки: как загрузили, так и отдаём.
+   *
+   * Для фото людей (п. персон) — единственный кадр без вариантов и без
+   * сжатия, `variants: []`; `MediaMapper` в этом случае отдаёт `url` прямо
+   * на storageKey, а `SiteImage` на сайте рисует обычный `<img>` без srcset.
+   */
+  private async uploadImageOriginal(
+    id: string,
+    baseKey: string,
+    mime: string,
+    input: UploadInput,
+    actor: AuditContext,
+  ): Promise<Media> {
+    const { width, height, blurhash } = await this.processor.keepOriginal(input.buffer);
+    const ext = IMAGE_EXTENSION_BY_MIME[mime] ?? 'jpg';
+    const key = `${baseKey}.${ext}`;
+
+    await this.storage.put(key, input.buffer, mime, { public: true });
+
+    const row = await this.prisma.media.create({
+      data: {
+        id,
+        kind: 'IMAGE',
+        originalName: input.originalName.slice(0, 255),
+        mime: 'image/*',
+        size: input.buffer.length,
+        width,
+        height,
+        storageKey: key,
+        blurhash,
+        variants: [] as never,
+        uploadedById: actor.userId ?? null,
+      },
+    });
+
+    await this.audit.record({
+      action: 'UPLOAD',
+      entity: 'media',
+      entityId: id,
+      entityLabel: input.originalName,
+      ...actor,
+    });
+
+    return this.mapper.toDto(row);
   }
 
   private async uploadImage(

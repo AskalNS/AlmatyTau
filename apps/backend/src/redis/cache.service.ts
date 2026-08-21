@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import Redis from 'ioredis';
 import { REDIS } from './redis.tokens';
+import { env } from '../config/env';
 
 /**
  * Кэш ответов публичного API (п. VIII ТЗ — механизмы кеширования).
@@ -51,7 +52,14 @@ export class CacheService {
     return value;
   }
 
-  /** Сброс всех ключей, помеченных тегами. Дёргается при изменении контента. */
+  /**
+   * Сброс всех ключей, помеченных тегами. Дёргается при изменении контента.
+   *
+   * Помимо собственного кэша API сбрасывает ISR-кэш публичного сайта тем же
+   * набором тегов — иначе редактор публикует правку, наш кэш чистится сразу,
+   * а Next.js ещё до 5 минут отдаёт старую страницу из своего собственного
+   * кэша (те же теги на fetch() в apps/web, см. app/api/revalidate/route.ts).
+   */
   async invalidateTags(...tags: string[]): Promise<void> {
     for (const tag of tags) {
       const setKey = `tag:${tag}`;
@@ -62,5 +70,32 @@ export class CacheService {
       await this.redis.del(setKey);
     }
     this.logger.debug(`Сброшен кэш по тегам: ${tags.join(', ')}`);
+    await this.revalidateWeb(tags);
+  }
+
+  /** Не должно ронять сохранение контента, если сайт временно недоступен. */
+  private async revalidateWeb(tags: string[]): Promise<void> {
+    const { WEB_INTERNAL_URL, REVALIDATE_SECRET } = env();
+    if (!REVALIDATE_SECRET) return;
+    try {
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 5000);
+      const res = await fetch(`${WEB_INTERNAL_URL}/api/revalidate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-revalidate-secret': REVALIDATE_SECRET,
+        },
+        body: JSON.stringify({ tags }),
+        signal: ctrl.signal,
+      }).finally(() => clearTimeout(timeout));
+      if (!res.ok) {
+        this.logger.warn(`Ревалидация сайта вернула ${res.status} для тегов: ${tags.join(', ')}`);
+      }
+    } catch (e) {
+      this.logger.warn(
+        `Не удалось сбросить ISR-кэш сайта (теги: ${tags.join(', ')}): ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
   }
 }
