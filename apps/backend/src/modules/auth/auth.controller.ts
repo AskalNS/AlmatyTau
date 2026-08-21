@@ -26,6 +26,7 @@ import { AuthService } from './auth.service';
 import { AccountService } from './account.service';
 import { AuditService } from '../audit/audit.service';
 import { Public } from './decorators/public.decorator';
+import { Skip2FAEnforcement } from './decorators/skip-2fa.decorator';
 import { CurrentUser, type AuthUser } from './decorators/current-user.decorator';
 
 @ApiTags('Аутентификация')
@@ -62,6 +63,7 @@ export class AuthController {
     return this.auth.refresh(dto.refreshToken, AuditService.contextFromRequest(req));
   }
 
+  @Skip2FAEnforcement()
   @Post('logout')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Выход' })
@@ -73,6 +75,7 @@ export class AuthController {
     return { ok: true };
   }
 
+  @Skip2FAEnforcement()
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Текущий пользователь' })
@@ -80,6 +83,7 @@ export class AuthController {
     return this.auth.me(userId);
   }
 
+  @Skip2FAEnforcement()
   @Post('password')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Смена собственного пароля' })
@@ -91,6 +95,7 @@ export class AuthController {
     return { ok: true };
   }
 
+  @Skip2FAEnforcement()
   @Post('totp/setup')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Начать подключение 2FA: получить секрет и QR' })
@@ -98,14 +103,16 @@ export class AuthController {
     return this.account.setupTotp(userId);
   }
 
+  @Skip2FAEnforcement()
   @Post('totp/confirm')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Подтвердить код и включить 2FA' })
   confirmTotp(
     @Body(zodBody(totpConfirmRequestSchema)) dto: TotpConfirmRequest,
     @CurrentUser('id') userId: string,
+    @Req() req: Request,
   ) {
-    return this.account.confirmTotp(userId, dto.code);
+    return this.account.confirmTotp(userId, dto.code, AuditService.contextFromRequest(req));
   }
 
   @Post('totp/disable')

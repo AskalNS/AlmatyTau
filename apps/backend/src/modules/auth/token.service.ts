@@ -14,6 +14,7 @@ interface AccessPayload {
   id: string;
   email: string;
   role: Role;
+  twoFactorEnabled: boolean;
   typ: 'access';
 }
 
@@ -38,13 +39,14 @@ export class TokenService {
   }
 
   async issuePair(
-    user: { id: string; email: string; role: Role },
+    user: { id: string; email: string; role: Role; twoFactorEnabled: boolean },
     meta: { ip?: string | null; userAgent?: string | null },
   ): Promise<TokenPair> {
     const accessPayload: AccessPayload = {
       id: user.id,
       email: user.email,
       role: user.role,
+      twoFactorEnabled: user.twoFactorEnabled,
       typ: 'access',
     };
 
@@ -108,7 +110,7 @@ export class TokenService {
     });
 
     return this.issuePair(
-      { id: user.id, email: user.email, role: user.role },
+      { id: user.id, email: user.email, role: user.role, twoFactorEnabled: user.twoFactorEnabled },
       meta,
     );
   }

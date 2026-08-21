@@ -84,7 +84,11 @@ export class AccountService {
   }
 
   /** Шаг 2: подтвердить код, включить 2FA, выдать коды восстановления. */
-  async confirmTotp(userId: string, code: string): Promise<TotpConfirmResponse> {
+  async confirmTotp(
+    userId: string,
+    code: string,
+    meta: { ip?: string | null; userAgent?: string | null },
+  ): Promise<TotpConfirmResponse> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user?.totpSecret) {
       throw new BadRequestException('Сначала запросите настройку двухфакторной аутентификации');
@@ -112,7 +116,15 @@ export class AccountService {
       userName: user.name,
     });
 
-    return { recoveryCodes: plain };
+    // Переиздаём пару токенов сразу с twoFactorEnabled=true — иначе для
+    // ADMIN принудительная проверка 2FA в JwtAuthGuard тут же заблокирует
+    // собственным же старым токеном все остальные действия до его истечения.
+    const tokens = await this.tokens.issuePair(
+      { id: user.id, email: user.email, role: user.role, twoFactorEnabled: true },
+      meta,
+    );
+
+    return { recoveryCodes: plain, ...tokens };
   }
 
   /**

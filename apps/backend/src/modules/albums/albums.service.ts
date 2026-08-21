@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   type UpsertAlbumRequest,
   type Album,
@@ -52,7 +52,7 @@ export class AlbumsService {
 
   async create(dto: UpsertAlbumRequest, actor: AuditContext): Promise<Album> {
     const clash = await this.prisma.album.findUnique({ where: { slug: dto.slug } });
-    if (clash) throw new NotFoundException('Альбом с таким адресом уже существует');
+    if (clash) throw new BadRequestException('Альбом с таким адресом уже существует');
 
     const row = await this.prisma.album.create({ data: this.writeData(dto), include: INCLUDE });
     await this.afterWrite(row, 'CREATE', actor);

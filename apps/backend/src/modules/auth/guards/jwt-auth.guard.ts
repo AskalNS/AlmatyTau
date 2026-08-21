@@ -1,14 +1,17 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
+import { ERROR_CODES } from '@atm/contracts';
 import { env } from '../../../config/env';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { SKIP_2FA_KEY } from '../decorators/skip-2fa.decorator';
 import type { AuthUser } from '../decorators/current-user.decorator';
 
 /**
@@ -44,9 +47,33 @@ export class JwtAuthGuard implements CanActivate {
       if (payload.typ && payload.typ !== 'access') {
         throw new UnauthorizedException();
       }
-      req.user = { id: payload.id, email: payload.email, role: payload.role };
+      req.user = {
+        id: payload.id,
+        email: payload.email,
+        role: payload.role,
+        twoFactorEnabled: payload.twoFactorEnabled,
+      };
+
+      // Принудительная 2FA для ADMIN (п. X.II ТЗ): пароль сам по себе не
+      // должен давать полный доступ, если админ так и не включил второй
+      // фактор — иначе требование «есть 2FA» выполняется формально, а
+      // фактически рубеж защиты просто не работает. Открыт только путь,
+      // необходимый, чтобы её включить (см. Skip2FAEnforcement).
+      const skip2fa = this.reflector.getAllAndOverride<boolean>(SKIP_2FA_KEY, [
+        ctx.getHandler(),
+        ctx.getClass(),
+      ]);
+      if (!skip2fa && payload.role === 'ADMIN' && !payload.twoFactorEnabled) {
+        throw new ForbiddenException({
+          statusCode: 403,
+          code: ERROR_CODES.TOTP_SETUP_REQUIRED,
+          message: 'Для этой роли обязательна двухфакторная аутентификация — сначала включите её в профиле.',
+        });
+      }
+
       return true;
-    } catch {
+    } catch (e) {
+      if (e instanceof ForbiddenException) throw e;
       throw new UnauthorizedException('Сессия истекла, войдите заново');
     }
   }

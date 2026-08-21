@@ -55,12 +55,16 @@ export class AuditService {
 
   /** Извлекает IP и User-Agent из запроса с учётом прокси nginx. */
   static contextFromRequest(req: Request): Pick<AuditContext, 'ip' | 'userAgent'> {
-    // X-Forwarded-For выставляет nginx; берём первый адрес из цепочки.
-    const forwarded = req.headers['x-forwarded-for'];
-    const ip =
-      (Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(',')[0]?.trim()) ||
-      req.socket.remoteAddress ||
-      null;
+    // req.ip, а не самостоятельный разбор X-Forwarded-For: nginx ДОБАВЛЯЕТ
+    // реальный IP клиента в конец цепочки XFF, а не заменяет её — значение,
+    // присланное самим клиентом, остаётся первым. Раньше здесь брался именно
+    // первый адрес цепочки, то есть любой клиент мог подделать IP в журнале
+    // действий заголовком `X-Forwarded-For: 1.2.3.4` (не обход rate-limit —
+    // тот считается по TCP-адресу в nginx/ThrottlerGuard — а порча судебного
+    // следа после инцидента). `trust proxy=1` в main.ts заставляет Express
+    // доверять ровно одному хопу (nginx) и брать req.ip как адрес ПЕРЕД ним —
+    // то есть последний непроверяемый, настоящий IP клиента.
+    const ip = req.ip || req.socket.remoteAddress || null;
     const ua = req.headers['user-agent'] ?? null;
     return { ip, userAgent: ua };
   }
