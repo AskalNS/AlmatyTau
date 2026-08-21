@@ -85,6 +85,15 @@ export type TotpConfirmRequest = z.infer<typeof totpConfirmRequestSchema>;
 export const totpConfirmResponseSchema = z.object({
   /** Одноразовые коды на случай потери телефона. Показываются один раз. */
   recoveryCodes: z.array(z.string()),
+  /**
+   * Свежая пара токенов с уже актуальным twoFactorEnabled=true в payload.
+   * Без неё для роли ADMIN пришлось бы либо ждать истечения старого access
+   * (до 15 мин), либо перезаходить — 2FA включена, но собственный же
+   * токен ещё не в курсе и продолжит упираться в принудительную проверку
+   * JwtAuthGuard на всех эндпоинтах, кроме её собственной настройки.
+   */
+  accessToken: z.string(),
+  refreshToken: z.string(),
 });
 export type TotpConfirmResponse = z.infer<typeof totpConfirmResponseSchema>;
 

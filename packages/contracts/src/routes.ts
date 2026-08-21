@@ -85,6 +85,7 @@ export const API = {
     album: (id: string) => `/api/admin/albums/${id}`,
 
     home: '/api/admin/home',
+    homeSection: (id: string) => `/api/admin/home/${id}`,
 
     /** Ссылка предпросмотра черновика: открывает страницу сайта. */
     preview: '/api/admin/preview',
@@ -158,7 +159,7 @@ export const ADMIN_ROUTES = {
   personEdit: (id: string) => `/persons/${id}`,
 
   documents: '/documents',
-  documentCategories: '/documents/categories',
+  documentEdit: (id: string) => `/documents/${id}`,
 
   vacancies: '/vacancies',
   vacancyNew: '/vacancies/new',
@@ -169,8 +170,15 @@ export const ADMIN_ROUTES = {
   albumEdit: (id: string) => `/albums/${id}`,
 
   media: '/media',
+
   links: '/links',
+  linkNew: '/links/new',
+  linkEdit: (id: string) => `/links/${id}`,
+
   menu: '/menu',
+  menuNew: '/menu/new',
+  menuEdit: (id: string) => `/menu/${id}`,
+
   settings: '/settings',
 
   /** Только для роли Администратор (п. V ТЗ). */

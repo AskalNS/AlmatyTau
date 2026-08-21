@@ -110,7 +110,7 @@ export type UpsertNewsRequest = z.infer<typeof upsertNewsRequestSchema>;
 
 export const newsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(48).default(9),
+  limit: z.coerce.number().int().min(1).max(100).default(9),
   /** Год для архива — п. 5.1 требует архив и сортировку по дате. */
   year: z.coerce.number().int().min(2000).max(2100).optional(),
   categoryId: z.string().optional(),

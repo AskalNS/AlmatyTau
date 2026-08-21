@@ -266,6 +266,55 @@ export const publicHomeSchema = z.object({
 });
 export type PublicHome = z.infer<typeof publicHomeSchema>;
 
+/* ---------------------------------------------------------- секции: админка */
+
+/**
+ * Секция главной страницы для редактирования — в отличие от публичной,
+ * не сведена к одному языку: отдаёт все переводы разом, как остальные
+ * сущности в разделе «Админка» (см. content.ts).
+ */
+export const homeSectionTranslationSchema = z.object({
+  locale: localeSchema,
+  eyebrow: z.string().trim().max(200).optional().nullable(),
+  title: z.string().trim().max(300).optional().nullable(),
+  subtitle: z.string().trim().max(1000).optional().nullable(),
+  blocks: blocksSchema.default([]),
+  primaryLabel: z.string().trim().max(100).optional().nullable(),
+  primaryHref: z.string().trim().max(500).optional().nullable(),
+  secondaryLabel: z.string().trim().max(100).optional().nullable(),
+  secondaryHref: z.string().trim().max(500).optional().nullable(),
+});
+export type HomeSectionTranslation = z.infer<typeof homeSectionTranslationSchema>;
+
+export const homeSectionSchema = z.object({
+  id: z.string(),
+  type: homeSectionTypeSchema,
+  order: z.number().int(),
+  isVisible: z.boolean(),
+  /** Только для type === 'hero': постер — LCP-элемент баннера. */
+  heroPosterId: z.string().nullable(),
+  heroVideoId: z.string().nullable(),
+  videoOnMobile: z.boolean(),
+  href: z.string().nullable(),
+  translations: z.array(homeSectionTranslationSchema),
+});
+export type HomeSection = z.infer<typeof homeSectionSchema>;
+
+/**
+ * Состав секций (их количество и типы) задаётся при наполнении сайта
+ * контентом и здесь не меняется — редактируется содержимое существующих
+ * секций: тексты, фотографии в блоках, кадры баннера, видимость.
+ */
+export const updateHomeSectionRequestSchema = z.object({
+  isVisible: z.boolean().default(true),
+  heroPosterId: z.string().optional().nullable(),
+  heroVideoId: z.string().optional().nullable(),
+  videoOnMobile: z.boolean().default(false),
+  href: z.string().trim().max(1000).optional().nullable(),
+  translations: z.array(homeSectionTranslationSchema).min(1, 'Заполните хотя бы один язык'),
+});
+export type UpdateHomeSectionRequest = z.infer<typeof updateHomeSectionRequestSchema>;
+
 /* ============================================================================
    Каркас сайта: меню, настройки, языки. Один запрос на весь layout.
    ========================================================================== */

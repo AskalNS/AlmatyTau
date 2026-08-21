@@ -168,6 +168,8 @@ export const ERROR_CODES = {
   ACCOUNT_LOCKED: 'ACCOUNT_LOCKED',
   TOTP_REQUIRED: 'TOTP_REQUIRED',
   TOTP_INVALID: 'TOTP_INVALID',
+  /** Роль требует 2FA (п. X.II ТЗ), а она ещё не включена — доступны только эндпоинты её настройки. */
+  TOTP_SETUP_REQUIRED: 'TOTP_SETUP_REQUIRED',
   INTERNAL: 'INTERNAL_ERROR',
 } as const;
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
